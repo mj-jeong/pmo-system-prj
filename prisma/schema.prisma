@@ -1,0 +1,227 @@
+// PMO System - Prisma Schema
+// Multi-tenant SaaS for development organizations
+// All domain entities MUST include organizationId for data isolation
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Organization - Top-level tenant entity
+// =============================================================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  users          User[]
+  roles          Role[]
+  projects       Project[]
+  projectUpdates ProjectUpdate[]
+  attendance     Attendance[]
+  timeOffs       TimeOff[]
+
+  @@map("organizations")
+}
+
+// =============================================================================
+// User - Organization member with role-based access
+// =============================================================================
+
+model User {
+  id             String   @id @default(cuid())
+  email          String
+  name           String
+  hashedPassword String
+  organizationId String
+  roleId         String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization   Organization    @relation(fields: [organizationId], references: [id])
+  role           Role            @relation(fields: [roleId], references: [id])
+  projectUpdates ProjectUpdate[]
+  attendance     Attendance[]
+  timeOffs       TimeOff[]
+
+  // Indexes
+  @@unique([email, organizationId])
+  @@index([organizationId])
+  @@index([roleId])
+  @@map("users")
+}
+
+// =============================================================================
+// Role - 3-tier role within an organization: OWNER > ADMIN > MEMBER
+// =============================================================================
+
+model Role {
+  id             String   @id @default(cuid())
+  name           RoleName
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  users        User[]
+
+  // Each organization has exactly one of each role type
+  @@unique([name, organizationId])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+enum RoleName {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+// =============================================================================
+// Project - Organizational project with status tracking
+// =============================================================================
+
+model Project {
+  id             String        @id @default(cuid())
+  name           String
+  description    String?
+  status         ProjectStatus @default(IN_PROGRESS)
+  startDate      DateTime?
+  endDate        DateTime?
+  progress       Int           @default(0) // 0-100 percentage
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  updates      ProjectUpdate[]
+
+  // Indexes
+  @@index([organizationId])
+  @@index([status])
+  @@index([organizationId, status])
+  @@map("projects")
+}
+
+enum ProjectStatus {
+  IN_PROGRESS
+  DELAYED
+  COMPLETED
+}
+
+// =============================================================================
+// ProjectUpdate - Structured update log for AI-readiness
+// Preserves chronological project status for future report generation
+// =============================================================================
+
+model ProjectUpdate {
+  id             String   @id @default(cuid())
+  content        String   // Free-text structured status: progress, blockers, plans
+  projectId      String
+  authorId       String
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  project      Project      @relation(fields: [projectId], references: [id])
+  author       User         @relation(fields: [authorId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  // Indexes
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([authorId])
+  @@index([organizationId, projectId])
+  @@index([organizationId, createdAt]) // For chronological report generation
+  @@map("project_updates")
+}
+
+// =============================================================================
+// Attendance - Daily attendance tracking per user
+// Button-based workflow: Check-in button -> server timestamp -> Check-out button -> server timestamp
+// =============================================================================
+
+model Attendance {
+  id             String           @id @default(cuid())
+  userId         String
+  date           DateTime         @db.Date
+  checkIn        DateTime?        // Timestamp recorded when user clicks "Check-in" button (server-side)
+  checkOut       DateTime?        // Timestamp recorded when user clicks "Check-out" button (server-side)
+  status         AttendanceStatus @default(ABSENT)
+  organizationId String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  // One attendance record per user per day per organization
+  @@unique([userId, date, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([organizationId, date])
+  @@map("attendance")
+}
+
+enum AttendanceStatus {
+  CHECKED_IN
+  CHECKED_OUT
+  ABSENT
+}
+
+// =============================================================================
+// TimeOff - Leave request management with approval workflow
+// =============================================================================
+
+model TimeOff {
+  id             String        @id @default(cuid())
+  userId         String
+  startDate      DateTime      @db.Date
+  endDate        DateTime      @db.Date
+  type           TimeOffType
+  status         TimeOffStatus @default(PENDING)
+  reason         String?
+  organizationId String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id])
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  // Indexes
+  @@index([organizationId])
+  @@index([userId])
+  @@index([organizationId, status])
+  @@index([organizationId, userId])
+  @@map("time_offs")
+}
+
+enum TimeOffType {
+  VACATION
+  SICK
+  PERSONAL
+}
+
+enum TimeOffStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
