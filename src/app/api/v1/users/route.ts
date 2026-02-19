@@ -1,18 +1,29 @@
 // PMO System - Users API Routes
-// GET /api/v1/users - List organization members (OWNER or ADMIN)
+// GET /api/v1/users - List organization members with pagination (OWNER or ADMIN)
 
 import { withOrgScope } from "@/lib/permissions/organization-scope";
 import { requireAdmin } from "@/lib/permissions/rbac";
 import { userService } from "@/lib/domain/user";
-import { createSuccessResponse } from "@/types/api";
+import { createPaginatedResponse } from "@/types/api";
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
 
 /**
  * GET /api/v1/users
- * List all members in the current organization (OWNER or ADMIN).
+ * List members in the current organization with pagination (OWNER or ADMIN).
+ * Query params: page (default: 1), limit (default: 20, max: 100)
  */
 export const GET = withOrgScope(
   requireAdmin(async (req, { organizationId }) => {
-    const users = await userService.getUsers(organizationId);
+    const { searchParams } = new URL(req.url);
+
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? String(DEFAULT_PAGE), 10) || DEFAULT_PAGE);
+    const rawLimit = parseInt(searchParams.get("limit") ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT;
+    const limit = Math.min(MAX_LIMIT, Math.max(1, rawLimit));
+
+    const { users, total } = await userService.getUsersPaginated(organizationId, page, limit);
 
     // Map to safe response shape (exclude hashedPassword)
     const safeUsers = users.map((u) => ({
@@ -25,6 +36,6 @@ export const GET = withOrgScope(
       updatedAt: u.updatedAt.toISOString(),
     }));
 
-    return Response.json(createSuccessResponse(safeUsers));
+    return Response.json(createPaginatedResponse(safeUsers, total, page, limit));
   })
 );

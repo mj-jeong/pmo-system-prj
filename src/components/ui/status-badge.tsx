@@ -2,6 +2,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 import type { ProjectStatus, AttendanceStatus, TimeOffStatus } from "@/types";
+import type { ReportStatus, AgentRunStatus } from "@/lib/services/agent.service";
 
 // ---------------------------------------------------------------------------
 // Status Badge - Displays project, attendance, or time-off status with
@@ -36,6 +37,18 @@ const statusBadgeVariants = cva(
           "border-transparent bg-success/15 text-success",
         REJECTED:
           "border-transparent bg-destructive/15 text-destructive",
+
+        // Report statuses
+        DRAFT:
+          "border-transparent bg-warning/15 text-warning",
+        PUBLISHED:
+          "border-transparent bg-success/15 text-success",
+
+        // Agent run statuses
+        RUNNING:
+          "border-transparent bg-primary/15 text-primary",
+        FAILED:
+          "border-transparent bg-destructive/15 text-destructive",
       },
     },
     defaultVariants: {
@@ -58,9 +71,15 @@ const STATUS_LABELS: Record<string, string> = {
   PENDING: "Pending",
   APPROVED: "Approved",
   REJECTED: "Rejected",
+  // Report
+  DRAFT: "Draft",
+  PUBLISHED: "Published",
+  // Agent run
+  RUNNING: "Running",
+  FAILED: "Failed",
 };
 
-type StatusValue = ProjectStatus | AttendanceStatus | TimeOffStatus;
+type StatusValue = ProjectStatus | AttendanceStatus | TimeOffStatus | ReportStatus | AgentRunStatus;
 
 export interface StatusBadgeProps
   extends Omit<React.HTMLAttributes<HTMLSpanElement>, "children">,
@@ -69,17 +88,32 @@ export interface StatusBadgeProps
   status: StatusValue;
   /** Optional custom label override */
   label?: string;
+  /** Optional variant override for custom styling */
+  variant?: "default" | "success" | "warning" | "error" | "info";
 }
+
+const VARIANT_CLASSES: Record<string, string> = {
+  success: "border-transparent bg-success/15 text-success",
+  warning: "border-transparent bg-warning/15 text-warning",
+  error: "border-transparent bg-destructive/15 text-destructive",
+  info: "border-transparent bg-primary/15 text-primary",
+  default: "border-transparent bg-muted text-muted-foreground",
+};
 
 function StatusBadge({
   className,
   status,
   label,
+  variant,
   ...props
 }: StatusBadgeProps) {
+  const variantClass = variant ? VARIANT_CLASSES[variant] : undefined;
   return (
     <span
-      className={cn(statusBadgeVariants({ status }), className)}
+      className={cn(
+        variantClass || statusBadgeVariants({ status }),
+        className
+      )}
       {...props}
     >
       {label ?? STATUS_LABELS[status] ?? status}

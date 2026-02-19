@@ -51,6 +51,8 @@ export const ROLE_PERMISSIONS = {
       invite: true,
       assignRole: true,
     },
+    agent: { generate: true, view: true },
+    report: { view: true, publish: true },
   },
   ADMIN: {
     organization: { create: false, read: true, update: false, delete: false },
@@ -73,6 +75,8 @@ export const ROLE_PERMISSIONS = {
       invite: true,
       assignRole: false,
     },
+    agent: { generate: true, view: true },
+    report: { view: true, publish: true },
   },
   MEMBER: {
     organization: { create: false, read: true, update: false, delete: false },
@@ -95,6 +99,8 @@ export const ROLE_PERMISSIONS = {
       invite: false,
       assignRole: false,
     },
+    agent: { generate: false, view: false },
+    report: { view: false, publish: false },
   },
 } as const;
 

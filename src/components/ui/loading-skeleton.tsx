@@ -20,7 +20,7 @@ function Skeleton({
   );
 }
 
-export type SkeletonVariant = "card" | "table" | "text";
+export type SkeletonVariant = "card" | "table" | "text" | "detail";
 
 export interface LoadingSkeletonProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -79,6 +79,25 @@ function TextSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
+/** Renders skeleton for detail page with header and content */
+function DetailSkeleton() {
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="space-y-3">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+      {/* Content sections */}
+      <div className="space-y-4">
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    </div>
+  );
+}
+
 function LoadingSkeleton({
   className,
   variant = "card",
@@ -96,8 +115,9 @@ function LoadingSkeleton({
       )}
       {variant === "table" && <TableSkeleton count={count} />}
       {variant === "text" && <TextSkeleton count={count} />}
+      {variant === "detail" && <DetailSkeleton />}
     </div>
   );
 }
 
-export { Skeleton, LoadingSkeleton, CardSkeleton, TableSkeleton, TextSkeleton };
+export { Skeleton, LoadingSkeleton, CardSkeleton, TableSkeleton, TextSkeleton, DetailSkeleton };

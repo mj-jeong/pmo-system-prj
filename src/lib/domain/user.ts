@@ -23,6 +23,40 @@ export const userService = {
   },
 
   /**
+   * List members in the organization with pagination (excludes soft-deleted).
+   */
+  async getUsersPaginated(
+    organizationId: string,
+    page: number,
+    limit: number
+  ) {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where: {
+          organizationId,
+          deletedAt: null,
+        },
+        include: {
+          role: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.user.count({
+        where: {
+          organizationId,
+          deletedAt: null,
+        },
+      }),
+    ]);
+
+    return { users, total };
+  },
+
+  /**
    * Get a single user by ID within the organization.
    */
   async getUserById(userId: string, organizationId: string) {

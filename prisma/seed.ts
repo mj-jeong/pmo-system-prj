@@ -12,7 +12,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
-  // Clean existing data
+  // Clean existing data (order matters for FK constraints)
+  // Agent & Report tables (must be deleted before User/Organization)
+  await prisma.toolCall.deleteMany();
+  await prisma.agentStep.deleteMany();
+  await prisma.agentRun.deleteMany();
+  await prisma.report.deleteMany();
+  // Core domain tables
   await prisma.projectUpdate.deleteMany();
   await prisma.attendance.deleteMany();
   await prisma.timeOff.deleteMany();

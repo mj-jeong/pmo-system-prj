@@ -30,6 +30,8 @@ model Organization {
   projectUpdates ProjectUpdate[]
   attendance     Attendance[]
   timeOffs       TimeOff[]
+  agentRuns      AgentRun[]
+  reports        Report[]
 
   @@map("organizations")
 }
@@ -50,11 +52,14 @@ model User {
   deletedAt      DateTime?
 
   // Relations
-  organization   Organization    @relation(fields: [organizationId], references: [id])
-  role           Role            @relation(fields: [roleId], references: [id])
-  projectUpdates ProjectUpdate[]
-  attendance     Attendance[]
-  timeOffs       TimeOff[]
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  role             Role            @relation(fields: [roleId], references: [id])
+  projectUpdates   ProjectUpdate[]
+  attendance       Attendance[]
+  timeOffs         TimeOff[]
+  agentRuns        AgentRun[]
+  createdReports   Report[]        @relation("ReportCreatedBy")
+  publishedReports Report[]        @relation("ReportPublishedBy")
 
   // Indexes
   @@unique([email, organizationId])
@@ -224,4 +229,160 @@ enum TimeOffStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// =============================================================================
+// Agent & Report Enums
+// =============================================================================
+
+enum AgentRunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum AgentStepName {
+  PLAN
+  COLLECT
+  ANALYZE
+  SUMMARIZE
+  DRAFT
+}
+
+enum AgentStepStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
+enum ReportStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum DetailLevel {
+  BRIEF
+  STANDARD
+  DETAILED
+}
+
+// =============================================================================
+// AgentRun - Tracks a single agent execution lifecycle
+// Records input parameters, status, timing, and links to generated report
+// =============================================================================
+
+model AgentRun {
+  id             String         @id @default(cuid())
+  organizationId String
+  createdById    String
+  status         AgentRunStatus @default(PENDING)
+  inputParams    Json
+  outputSummary  Json?
+  errorMessage   String?
+  startedAt      DateTime?
+  finishedAt     DateTime?
+  reportId       String?        @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  createdBy    User         @relation(fields: [createdById], references: [id])
+  report       Report?      @relation(fields: [reportId], references: [id])
+  steps        AgentStep[]
+
+  // Indexes
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([status])
+  @@map("agent_runs")
+}
+
+// =============================================================================
+// AgentStep - Individual step within an agent run pipeline
+// Tracks each phase: PLAN -> COLLECT -> ANALYZE -> SUMMARIZE -> DRAFT
+// =============================================================================
+
+model AgentStep {
+  id           String          @id @default(cuid())
+  runId        String
+  stepName     AgentStepName
+  status       AgentStepStatus @default(PENDING)
+  inputData    Json?
+  outputData   Json?
+  errorMessage String?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime        @default(now())
+
+  // Relations
+  run       AgentRun   @relation(fields: [runId], references: [id], onDelete: Cascade)
+  toolCalls ToolCall[]
+
+  // Indexes
+  @@index([runId])
+  @@index([stepName])
+  @@map("agent_steps")
+}
+
+// =============================================================================
+// ToolCall - Records individual tool invocations during agent steps
+// Provides observability into data collection and external API calls
+// =============================================================================
+
+model ToolCall {
+  id              String   @id @default(cuid())
+  stepId          String
+  toolName        String
+  requestPayload  Json?
+  responsePayload Json?
+  latencyMs       Int?
+  error           String?
+  createdAt       DateTime @default(now())
+
+  // Relations
+  step AgentStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([stepId])
+  @@index([toolName])
+  @@map("tool_calls")
+}
+
+// =============================================================================
+// Report - Generated PMO report with draft/publish workflow
+// Stores both markdown content and structured analysis data
+// =============================================================================
+
+model Report {
+  id                String       @id @default(cuid())
+  organizationId    String
+  periodStart       DateTime
+  periodEnd         DateTime
+  projectIds        Json
+  detailLevel       DetailLevel  @default(STANDARD)
+  status            ReportStatus @default(DRAFT)
+  draftMarkdown     String       @db.Text
+  publishedMarkdown String?      @db.Text
+  structuredData    Json?
+  createdById       String
+  publishedAt       DateTime?
+  publishedById     String?
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  createdBy    User         @relation("ReportCreatedBy", fields: [createdById], references: [id])
+  publishedBy  User?        @relation("ReportPublishedBy", fields: [publishedById], references: [id])
+  agentRun     AgentRun?
+
+  // Indexes
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdById])
+  @@map("reports")
 }

@@ -1,10 +1,9 @@
 // PMO System - Projects API Routes
-// GET /api/v1/projects - List projects (pagination, filters)
-// POST /api/v1/projects - Create project
-
-import { NextRequest } from "next/server";
+// GET /api/v1/projects - List projects (pagination, filters) - all roles
+// POST /api/v1/projects - Create project (OWNER or ADMIN only)
 
 import { withOrgScope } from "@/lib/permissions/organization-scope";
+import { requireAdmin } from "@/lib/permissions/rbac";
 import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
 import { createProjectSchema } from "@/lib/validators/project";
 import { projectService } from "@/lib/domain/project";
@@ -12,7 +11,7 @@ import { createSuccessResponse, createPaginatedResponse } from "@/types/api";
 
 /**
  * GET /api/v1/projects
- * List projects with pagination and optional filters.
+ * List projects with pagination and optional filters (all roles).
  */
 export const GET = withOrgScope(async (req, { organizationId }) => {
   const { searchParams } = new URL(req.url);
@@ -35,26 +34,28 @@ export const GET = withOrgScope(async (req, { organizationId }) => {
 
 /**
  * POST /api/v1/projects
- * Create a new project.
+ * Create a new project (OWNER or ADMIN only).
  */
-export const POST = withOrgScope(async (req, { organizationId }) => {
-  try {
-    const body = await req.json();
+export const POST = withOrgScope(
+  requireAdmin(async (req, { organizationId }) => {
+    try {
+      const body = await req.json();
 
-    const parsed = createProjectSchema.safeParse(body);
-    if (!parsed.success) {
-      const details = parsed.error.errors.map((e) => ({
-        field: e.path.join("."),
-        message: e.message,
-      }));
-      return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
+      const parsed = createProjectSchema.safeParse(body);
+      if (!parsed.success) {
+        const details = parsed.error.errors.map((e) => ({
+          field: e.path.join("."),
+          message: e.message,
+        }));
+        return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
+      }
+
+      const project = await projectService.createProject(parsed.data, organizationId);
+
+      return Response.json(createSuccessResponse(project), { status: 201 });
+    } catch (error) {
+      console.error("[POST /api/v1/projects]", error);
+      return createErrorResponse(ERROR_CODES.INTERNAL_ERROR, "An unexpected error occurred.", 500);
     }
-
-    const project = await projectService.createProject(parsed.data, organizationId);
-
-    return Response.json(createSuccessResponse(project), { status: 201 });
-  } catch (error) {
-    console.error("[POST /api/v1/projects]", error);
-    return createErrorResponse(ERROR_CODES.INTERNAL_ERROR, "An unexpected error occurred.", 500);
-  }
-});
+  })
+);

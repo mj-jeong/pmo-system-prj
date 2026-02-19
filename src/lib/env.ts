@@ -28,6 +28,41 @@ const serverEnvSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+
+  // CI environment detection
+  // Set automatically by CI/CD systems (GitHub Actions, GitLab CI, etc.)
+  // When "true": Forces LLM_MODE=mock regardless of other settings
+  CI: z
+    .string()
+    .optional(),
+
+  // LLM Mode Selection (recommended)
+  // - "mock": Always use Mock provider, no API key needed, $0 cost
+  // - "real": Always use OpenAI provider, requires OPENAI_API_KEY
+  // - "auto" (default): Use OpenAI if API key available, fallback to Mock
+  LLM_MODE: z
+    .enum(["mock", "real", "auto"])
+    .optional()
+    .default("auto"),
+
+  // OpenAI Billing Toggle (LEGACY - use LLM_MODE instead)
+  // Maintained for backward compatibility with Phase 6-A configuration.
+  // When false (default): Mock LLM mode - no OpenAI API calls, no costs.
+  // When true: Real OpenAI API mode - requires valid OPENAI_API_KEY.
+  OPENAI_BILLING_ENABLED: z
+    .string()
+    .transform((val) => val === "true")
+    .default("false"),
+
+  // OpenAI API key - required when LLM_MODE=real or OPENAI_BILLING_ENABLED=true
+  // Optional for LLM_MODE=mock and LLM_MODE=auto (graceful fallback)
+  OPENAI_API_KEY: z
+    .string()
+    .optional()
+    .default(""),
+  OPENAI_MODEL: z
+    .string()
+    .default("gpt-4o-mini"),
 });
 
 /**
@@ -43,9 +78,27 @@ const clientEnvSchema = z.object({
 });
 
 /**
- * Combined environment schema.
+ * Combined environment schema with cross-field validation.
+ * The refine() ensures OPENAI_API_KEY is present when billing is enabled.
  */
-const envSchema = serverEnvSchema.merge(clientEnvSchema);
+const envSchema = serverEnvSchema.merge(clientEnvSchema).refine(
+  (data) => {
+    // LLM_MODE=real requires API key (new mode selection)
+    if (data.LLM_MODE === "real" && (!data.OPENAI_API_KEY || data.OPENAI_API_KEY.length === 0)) {
+      return false;
+    }
+    // Legacy: OPENAI_BILLING_ENABLED=true requires API key (backward compatibility)
+    if (data.OPENAI_BILLING_ENABLED && (!data.OPENAI_API_KEY || data.OPENAI_API_KEY.length === 0)) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "OPENAI_API_KEY is required when LLM_MODE=real or OPENAI_BILLING_ENABLED=true. " +
+      "Set LLM_MODE=mock for development (Mock LLM mode) or provide a valid API key.",
+    path: ["OPENAI_API_KEY"],
+  }
+);
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -57,9 +110,9 @@ function validateEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    const errors = parsed.error.flatten().fieldErrors;
-    const errorMessages = Object.entries(errors)
-      .map(([key, messages]) => `  ${key}: ${messages?.join(", ")}`)
+    const issues = parsed.error.issues;
+    const errorMessages = issues
+      .map((issue) => `  ${issue.path.join(".")}: ${issue.message}`)
       .join("\n");
 
     throw new Error(

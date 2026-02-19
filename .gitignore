@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.jest-cache/
 
 # next.js
 /.next/
@@ -22,6 +23,7 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
 
 # debug
@@ -33,6 +35,7 @@ yarn-error.log*
 # env files
 .env*
 !.env.example
+!.env.production.example
 
 # vercel
 .vercel
@@ -46,6 +49,10 @@ yarn-error.log*
 next-env.d.ts
 
 
-#document
-docs/
-prompts/
+# build output
+/dist
+
+
+# docs 
+docs
+prompts

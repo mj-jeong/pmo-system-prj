@@ -18,6 +18,14 @@ const eslintConfig = [
       '@typescript-eslint/no-unused-vars': 'off',
     },
   },
+  // Test files use dynamic require() to bypass server-only imports in Jest.
+  // This is a deliberate and necessary pattern for testing server-only modules.
+  {
+    files: ['**/__tests__/**/*.ts', '**/*.test.ts', '**/*.spec.ts'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
 ];
 
 export default eslintConfig;

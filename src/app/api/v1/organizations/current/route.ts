@@ -28,32 +28,34 @@ export const GET = withOrgScope(async (req, { organizationId }) => {
 
 /**
  * PATCH /api/v1/organizations/current
- * Update the current organization.
+ * Update the current organization (OWNER only).
  */
-export const PATCH = withOrgScope(async (req, { organizationId }) => {
-  const body = await req.json();
+export const PATCH = withOrgScope(
+  requireOwner(async (req, { organizationId }) => {
+    const body = await req.json();
 
-  const parsed = updateOrganizationSchema.safeParse(body);
-  if (!parsed.success) {
-    const details = parsed.error.errors.map((e) => ({
-      field: e.path.join("."),
-      message: e.message,
-    }));
-    return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
-  }
-
-  // If slug is being changed, check availability
-  if (parsed.data.slug) {
-    const slugTaken = await organizationService.isSlugTaken(parsed.data.slug, organizationId);
-    if (slugTaken) {
-      return createErrorResponse(ERROR_CODES.ORG_SLUG_TAKEN, "Organization slug is already in use.", 409);
+    const parsed = updateOrganizationSchema.safeParse(body);
+    if (!parsed.success) {
+      const details = parsed.error.errors.map((e) => ({
+        field: e.path.join("."),
+        message: e.message,
+      }));
+      return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
     }
-  }
 
-  const updated = await organizationService.updateOrganization(organizationId, parsed.data);
+    // If slug is being changed, check availability
+    if (parsed.data.slug) {
+      const slugTaken = await organizationService.isSlugTaken(parsed.data.slug, organizationId);
+      if (slugTaken) {
+        return createErrorResponse(ERROR_CODES.ORG_SLUG_TAKEN, "Organization slug is already in use.", 409);
+      }
+    }
 
-  return Response.json(createSuccessResponse(updated));
-});
+    const updated = await organizationService.updateOrganization(organizationId, parsed.data);
+
+    return Response.json(createSuccessResponse(updated));
+  })
+);
 
 /**
  * DELETE /api/v1/organizations/current

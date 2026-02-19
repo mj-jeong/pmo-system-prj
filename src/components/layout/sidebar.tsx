@@ -8,6 +8,7 @@ import {
   FolderKanban,
   CalendarCheck,
   CalendarOff,
+  FileText,
   Settings,
   Users,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Attendance", href: "/workforce/attendance", icon: CalendarCheck },
   { label: "Time Off", href: "/workforce/time-off", icon: CalendarOff },
+  { label: "Reports", href: "/reports", icon: FileText, minRole: "ADMIN" },
   { label: "Members", href: "/settings/members", icon: Users, minRole: "ADMIN" },
   { label: "Settings", href: "/settings", icon: Settings, minRole: "OWNER" },
 ];
