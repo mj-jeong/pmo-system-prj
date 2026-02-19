@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "next lint",
     "validate-env": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/validate-env.ts",
-    "prebuild": "npm run validate-env",
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
     "db:seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts",

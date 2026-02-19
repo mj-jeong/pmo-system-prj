@@ -4,8 +4,39 @@
  * Environment Variable Validation Script
  *
  * Validates all required environment variables before deployment.
- * Run with: ts-node scripts/validate-env.ts
+ * Run with: pnpm validate-env
+ *
+ * Automatically loads .env.local if present (for local development).
+ * Note: This script is NOT run as a prebuild hook.
+ *       Next.js loads .env.local automatically during `next build`,
+ *       and src/lib/env.ts validates variables at runtime via Zod.
  */
+
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+
+// Load .env.local if it exists (manual execution in local dev)
+function loadEnvFile(filePath: string): void {
+  if (!fs.existsSync(filePath)) return;
+  const content = fs.readFileSync(filePath, 'utf8');
+  for (const line of content.split(os.EOL)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx === -1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    const value = trimmed.slice(eqIdx + 1).trim().replace(/^["']|["']$/g, '');
+    if (!(key in process.env)) {
+      process.env[key] = value;
+    }
+  }
+}
+
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+const envPath = path.resolve(process.cwd(), '.env');
+loadEnvFile(envPath);
+loadEnvFile(envLocalPath);
 
 import { z } from 'zod';
 
