@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { LogOut, Menu } from "lucide-react";
+import { Globe, LogOut, Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -11,16 +11,32 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/lib/i18n/language-context";
+import { type Language, SUPPORTED_LANGUAGES } from "@/lib/i18n/translations";
 
 // ---------------------------------------------------------------------------
 // Header - Top navigation bar displaying the organization name on the left
 // and user avatar with a dropdown menu (profile info + logout) on the right.
 // Includes a mobile sidebar toggle button.
 // ---------------------------------------------------------------------------
+
+// Language names are always shown in their native script regardless of the
+// currently selected language.
+const LANGUAGE_NATIVE_NAMES: Record<Language, string> = {
+  ko: "한국어",
+  en: "English",
+  ja: "日本語",
+  zh: "中文",
+  vi: "Tiếng Việt",
+};
 
 export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   /** Organization name to display */
@@ -53,6 +69,8 @@ function Header({
   onLogout,
   ...props
 }: HeaderProps) {
+  const { language, setLanguage, t } = useLanguage();
+
   return (
     <header
       className={cn(
@@ -107,9 +125,35 @@ function Header({
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          {/* Language submenu */}
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger className="cursor-pointer">
+              <Globe className="mr-2 h-4 w-4" />
+              <span>{t("header.language")}</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuSubContent>
+              <DropdownMenuRadioGroup
+                value={language}
+                onValueChange={(val) => setLanguage(val as Language)}
+              >
+                {SUPPORTED_LANGUAGES.map((lang) => (
+                  <DropdownMenuRadioItem
+                    key={lang}
+                    value={lang}
+                    className="cursor-pointer"
+                  >
+                    {LANGUAGE_NATIVE_NAMES[lang]}
+                  </DropdownMenuRadioItem>
+                ))}
+              </DropdownMenuRadioGroup>
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
+
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={onLogout} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
-            <span>Log out</span>
+            <span>{t("header.logout")}</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

@@ -63,6 +63,19 @@ const serverEnvSchema = z.object({
   OPENAI_MODEL: z
     .string()
     .default("gpt-4o-mini"),
+
+  // Invitation System
+  // Resend API key for sending invitation emails (required for EMAIL delivery method)
+  RESEND_API_KEY: z
+    .string()
+    .optional()
+    .default(""),
+
+  // How long invitation tokens remain valid (in hours). Default: 48 hours.
+  INVITATION_EXPIRE_HOURS: z
+    .string()
+    .transform(Number)
+    .default("48"),
 });
 
 /**

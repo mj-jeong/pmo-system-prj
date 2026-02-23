@@ -31,7 +31,7 @@ export const GET = withOrgScope(async (req, { organizationId }) => {
  * Update the current organization (OWNER only).
  */
 export const PATCH = withOrgScope(
-  requireOwner(async (req, { organizationId }) => {
+  requireOwner(async (req, { organizationId, session }) => {
     const body = await req.json();
 
     const parsed = updateOrganizationSchema.safeParse(body);
@@ -51,7 +51,7 @@ export const PATCH = withOrgScope(
       }
     }
 
-    const updated = await organizationService.updateOrganization(organizationId, parsed.data);
+    const updated = await organizationService.updateOrganization(organizationId, session.id, parsed.data);
 
     return Response.json(createSuccessResponse(updated));
   })

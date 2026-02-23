@@ -43,7 +43,7 @@ export const GET = withOrgScope(async (req, { organizationId }) => {
  * Update a project (OWNER or ADMIN only).
  */
 export const PATCH = withOrgScope(
-  requireAdmin(async (req, { organizationId }) => {
+  requireAdmin(async (req, { organizationId, session }) => {
     try {
       const projectId = extractProjectId(req.url);
       if (!projectId) {
@@ -61,7 +61,7 @@ export const PATCH = withOrgScope(
         return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
       }
 
-      const updated = await projectService.updateProject(projectId, organizationId, parsed.data);
+      const updated = await projectService.updateProject(projectId, organizationId, session.id, parsed.data);
 
       if (!updated) {
         return createErrorResponse(ERROR_CODES.PROJECT_NOT_FOUND, "Project not found.", 404);
@@ -80,13 +80,13 @@ export const PATCH = withOrgScope(
  * Soft-delete a project (OWNER only).
  */
 export const DELETE = withOrgScope(
-  requireOwner(async (req, { organizationId }) => {
+  requireOwner(async (req, { organizationId, session }) => {
     const projectId = extractProjectId(req.url);
     if (!projectId) {
       return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Project ID is required.", 400);
     }
 
-    const deleted = await projectService.deleteProject(projectId, organizationId);
+    const deleted = await projectService.deleteProject(projectId, organizationId, session.id);
 
     if (!deleted) {
       return createErrorResponse(ERROR_CODES.PROJECT_NOT_FOUND, "Project not found.", 404);

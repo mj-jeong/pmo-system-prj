@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 
-const projectStatusEnum = z.enum(["IN_PROGRESS", "DELAYED", "COMPLETED"]);
+const projectStatusEnum = z.enum(["PLANNED", "IN_PROGRESS", "BLOCKED", "COMPLETED"]);
 
 /**
  * Schema for creating a new project.

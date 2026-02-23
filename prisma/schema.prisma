@@ -12,26 +12,47 @@ datasource db {
 }
 
 // =============================================================================
+// WeekDay - Day of week for scheduling
+// =============================================================================
+
+enum WeekDay {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+// =============================================================================
 // Organization - Top-level tenant entity
 // =============================================================================
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime?
+  id                String    @id @default(cuid())
+  name              String
+  slug              String    @unique
+  workingHoursStart Int?      // 0-23 (기본값 9시)
+  workingHoursEnd   Int?      // 0-23 (기본값 18시)
+  weeklyReportDay   WeekDay?  // 주간 리포트 기준 요일
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
 
   // Relations
-  users          User[]
-  roles          Role[]
-  projects       Project[]
-  projectUpdates ProjectUpdate[]
-  attendance     Attendance[]
-  timeOffs       TimeOff[]
-  agentRuns      AgentRun[]
-  reports        Report[]
+  users              User[]
+  roles              Role[]
+  projects           Project[]
+  projectUpdates     ProjectUpdate[]
+  attendance         Attendance[]
+  timeOffs           TimeOff[]
+  agentRuns          AgentRun[]
+  reports            Report[]
+  membershipRequests MembershipRequest[]
+  invitationTokens   InvitationToken[]
+  statusHistories    ProjectStatusHistory[]
+  auditLogs          AuditLog[]
 
   @@map("organizations")
 }
@@ -52,14 +73,16 @@ model User {
   deletedAt      DateTime?
 
   // Relations
-  organization     Organization    @relation(fields: [organizationId], references: [id])
-  role             Role            @relation(fields: [roleId], references: [id])
+  organization     Organization         @relation(fields: [organizationId], references: [id])
+  role             Role                 @relation(fields: [roleId], references: [id])
   projectUpdates   ProjectUpdate[]
   attendance       Attendance[]
   timeOffs         TimeOff[]
   agentRuns        AgentRun[]
-  createdReports   Report[]        @relation("ReportCreatedBy")
-  publishedReports Report[]        @relation("ReportPublishedBy")
+  createdReports   Report[]             @relation("ReportCreatedBy")
+  publishedReports Report[]             @relation("ReportPublishedBy")
+  statusHistories  ProjectStatusHistory[]
+  auditLogs        AuditLog[]
 
   // Indexes
   @@unique([email, organizationId])
@@ -80,8 +103,9 @@ model Role {
   updatedAt      DateTime @updatedAt
 
   // Relations
-  organization Organization @relation(fields: [organizationId], references: [id])
-  users        User[]
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  users            User[]
+  invitationTokens InvitationToken[]
 
   // Each organization has exactly one of each role type
   @@unique([name, organizationId])
@@ -113,8 +137,9 @@ model Project {
   deletedAt      DateTime?
 
   // Relations
-  organization Organization    @relation(fields: [organizationId], references: [id])
-  updates      ProjectUpdate[]
+  organization    Organization           @relation(fields: [organizationId], references: [id])
+  updates         ProjectUpdate[]
+  statusHistories ProjectStatusHistory[]
 
   // Indexes
   @@index([organizationId])
@@ -124,8 +149,9 @@ model Project {
 }
 
 enum ProjectStatus {
+  PLANNED
   IN_PROGRESS
-  DELAYED
+  BLOCKED
   COMPLETED
 }
 
@@ -155,6 +181,30 @@ model ProjectUpdate {
   @@index([organizationId, projectId])
   @@index([organizationId, createdAt]) // For chronological report generation
   @@map("project_updates")
+}
+
+// =============================================================================
+// ProjectStatusHistory - Tracks every project status change for auditability
+// =============================================================================
+
+model ProjectStatusHistory {
+  id             String         @id @default(cuid())
+  projectId      String
+  organizationId String
+  fromStatus     ProjectStatus? // null = 프로젝트 최초 생성 시
+  toStatus       ProjectStatus
+  changedById    String
+  createdAt      DateTime       @default(now())
+
+  // Relations
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id])
+  changedBy    User         @relation(fields: [changedById], references: [id])
+
+  // Indexes
+  @@index([organizationId, projectId])
+  @@index([projectId, createdAt])
+  @@map("project_status_histories")
 }
 
 // =============================================================================
@@ -353,6 +403,109 @@ model ToolCall {
 }
 
 // =============================================================================
+// MembershipRequest - 기존 조직 참여 요청 (Join Existing Organization)
+// 사용자가 요청 제출 → Owner/Admin 승인/거절 → 승인 시 User 생성
+// =============================================================================
+
+model MembershipRequest {
+  id             String        @id @default(cuid())
+  email          String
+  name           String
+  hashedPassword String        // 요청 시 사용자가 설정, 승인 시 User 생성에 사용
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  status         RequestStatus @default(PENDING)
+  message        String?       // 요청자 메모 (선택사항)
+  reviewedBy     String?       // 승인/거절한 Admin/Owner userId
+  reviewedAt     DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("membership_requests")
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// =============================================================================
+// InvitationToken - 다중 초대 시스템 (이메일 / QR코드 / 링크)
+// Admin/Owner가 토큰 생성 → 전달 방식 선택 → 사용자가 수락
+// =============================================================================
+
+model InvitationToken {
+  id             String         @id @default(cuid())
+  token          String         @unique
+  email          String?        // 이메일 발송 방식만 입력 (QR/Link는 null)
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id])
+  roleId         String
+  role           Role           @relation(fields: [roleId], references: [id])
+  deliveryMethod InviteDelivery @default(EMAIL)
+  invitedBy      String         // 초대한 userId
+  expiresAt      DateTime       // 기본 48시간 만료
+  usedAt         DateTime?      // 수락 완료 시간
+  usedByEmail    String?        // 실제 수락한 사용자 이메일 (QR/Link 방식용)
+  createdAt      DateTime       @default(now())
+
+  @@index([token])
+  @@index([organizationId])
+  @@map("invitation_tokens")
+}
+
+enum InviteDelivery {
+  EMAIL
+  QR_CODE
+  LINK
+}
+
+// =============================================================================
+// AuditLog - Immutable record of all significant admin/system actions
+// Queryable by organizationId for compliance and debugging
+// =============================================================================
+
+enum AuditAction {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_DELETED
+  PROJECT_STATUS_CHANGED
+  REPORT_GENERATED
+  REPORT_PUBLISHED
+  MEMBER_INVITED
+  MEMBER_APPROVED
+  MEMBER_REJECTED
+  MEMBER_REMOVED
+  TIME_OFF_APPROVED
+  TIME_OFF_REJECTED
+  ORG_SETTINGS_UPDATED
+}
+
+model AuditLog {
+  id             String      @id @default(cuid())
+  organizationId String
+  actorId        String
+  action         AuditAction
+  entityType     String      // "Project" | "Report" | "User" | "TimeOff" | "Organization"
+  entityId       String
+  meta           Json?       // 변경 전후 값, 추가 컨텍스트 등
+  createdAt      DateTime    @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  actor        User         @relation(fields: [actorId], references: [id])
+
+  // Indexes
+  @@index([organizationId, createdAt])
+  @@index([organizationId, action])
+  @@index([entityType, entityId])
+  @@map("audit_logs")
+}
+
+// =============================================================================
 // Report - Generated PMO report with draft/publish workflow
 // Stores both markdown content and structured analysis data
 // =============================================================================
@@ -368,6 +521,8 @@ model Report {
   draftMarkdown     String       @db.Text
   publishedMarkdown String?      @db.Text
   structuredData    Json?
+  reasoningTrace    Json?        // { inputSummary, appliedRules: RuleResult[], riskScore }
+  comparisonData    Json?        // { previousReportId, previousPeriod, deltas: {...} }
   createdById       String
   publishedAt       DateTime?
   publishedById     String?

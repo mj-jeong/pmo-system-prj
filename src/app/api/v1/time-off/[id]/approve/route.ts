@@ -21,14 +21,14 @@ function extractTimeOffId(url: string): string | null {
  * Approve a time-off request (OWNER or ADMIN).
  */
 export const PATCH = withOrgScope(
-  requireAdmin(async (req, { organizationId }) => {
+  requireAdmin(async (req, { organizationId, session }) => {
     try {
       const timeOffId = extractTimeOffId(req.url);
       if (!timeOffId) {
         return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Time-off ID is required.", 400);
       }
 
-      const result = await timeOffService.approveTimeOff(timeOffId, organizationId);
+      const result = await timeOffService.approveTimeOff(timeOffId, organizationId, session.id);
 
       if (result === null) {
         return createErrorResponse(ERROR_CODES.TIME_OFF_NOT_FOUND, "Time-off request not found.", 404);

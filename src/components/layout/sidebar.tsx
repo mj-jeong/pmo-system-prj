@@ -11,10 +11,12 @@ import {
   FileText,
   Settings,
   Users,
+  Shield,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { RoleName } from "@/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // ---------------------------------------------------------------------------
 // Sidebar - Left-hand navigation panel. Renders nav items conditionally
@@ -24,6 +26,7 @@ import type { RoleName } from "@/types";
 
 interface NavItem {
   label: string;
+  labelKey: string;
   href: string;
   icon: React.ElementType;
   /** Minimum role required to see this item */
@@ -31,13 +34,14 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", href: "/", icon: LayoutDashboard },
-  { label: "Projects", href: "/projects", icon: FolderKanban },
-  { label: "Attendance", href: "/workforce/attendance", icon: CalendarCheck },
-  { label: "Time Off", href: "/workforce/time-off", icon: CalendarOff },
-  { label: "Reports", href: "/reports", icon: FileText, minRole: "ADMIN" },
-  { label: "Members", href: "/settings/members", icon: Users, minRole: "ADMIN" },
-  { label: "Settings", href: "/settings", icon: Settings, minRole: "OWNER" },
+  { label: "Dashboard", labelKey: "nav.dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Projects", labelKey: "nav.projects", href: "/projects", icon: FolderKanban },
+  { label: "Attendance", labelKey: "nav.attendance", href: "/workforce/attendance", icon: CalendarCheck },
+  { label: "Time Off", labelKey: "nav.timeOff", href: "/workforce/time-off", icon: CalendarOff },
+  { label: "Reports", labelKey: "nav.reports", href: "/reports", icon: FileText, minRole: "ADMIN" },
+  { label: "Members", labelKey: "nav.members", href: "/settings/members", icon: Users, minRole: "ADMIN" },
+  { label: "Audit Logs", labelKey: "nav.auditLogs", href: "/settings/audit-logs", icon: Shield, minRole: "ADMIN" },
+  { label: "Settings", labelKey: "nav.settings", href: "/settings", icon: Settings, minRole: "OWNER" },
 ];
 
 // Role hierarchy for comparison
@@ -54,6 +58,7 @@ export interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
 
 function Sidebar({ className, currentRole = "MEMBER", ...props }: SidebarProps) {
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (!item.minRole) return true;
@@ -90,7 +95,7 @@ function Sidebar({ className, currentRole = "MEMBER", ...props }: SidebarProps) 
               aria-current={isActive ? "page" : undefined}
             >
               <Icon className="h-4 w-4 shrink-0" />
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
             </Link>
           );
         })}

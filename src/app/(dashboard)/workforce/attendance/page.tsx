@@ -18,8 +18,10 @@ import {
 } from "@/hooks/use-attendance";
 import Link from "next/link";
 import type { AttendanceResponse } from "@/types/attendance";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function AttendancePage() {
+  const { t } = useLanguage();
   const { data: todayRecord, isLoading } = useTodayAttendance();
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
@@ -58,8 +60,8 @@ export default function AttendancePage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Attendance"
-        description="Track your daily attendance"
+        title={t("pages.attendance.title")}
+        description={t("pages.attendance.description")}
         actions={
           <RoleGuard role="ADMIN">
             <Link href="/workforce/attendance/admin">

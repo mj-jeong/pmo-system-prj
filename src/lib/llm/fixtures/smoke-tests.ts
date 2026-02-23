@@ -84,6 +84,8 @@ export const normalProjectFixture: ReportContext = {
       leaveByType: { ANNUAL: 1 },
       concentrationWarning: false,
     },
+    ruleResults: [],
+    riskScore: 0,
     generatedAt: "2026-02-16T00:00:00.000Z",
   },
 };
@@ -135,6 +137,8 @@ export const dataPoorProjectFixture: ReportContext = {
       leaveByType: {},
       concentrationWarning: false,
     },
+    ruleResults: [],
+    riskScore: 0,
     generatedAt: "2026-02-16T00:00:00.000Z",
   },
 };
@@ -153,7 +157,7 @@ export const highRiskProjectFixture: ReportContext = {
       id: "proj-4",
       name: "Platform Migration",
       description: "Legacy system migration to cloud",
-      status: "DELAYED",
+      status: "BLOCKED",
       progress: 30,
       startDate: new Date("2025-10-01"),
       endDate: new Date("2026-02-28"),
@@ -221,10 +225,10 @@ export const highRiskProjectFixture: ReportContext = {
       {
         projectId: "proj-4",
         projectName: "Platform Migration",
-        status: "DELAYED",
+        status: "BLOCKED",
         progress: 30,
         expectedProgress: null,
-        reason: "STATUS_DELAYED",
+        reason: "STATUS_BLOCKED",
       },
       {
         projectId: "proj-5",
@@ -261,6 +265,8 @@ export const highRiskProjectFixture: ReportContext = {
       leaveByType: { SICK: 3, ANNUAL: 10 },
       concentrationWarning: true,
     },
+    ruleResults: [],
+    riskScore: 0,
     generatedAt: "2026-02-16T00:00:00.000Z",
   },
 };

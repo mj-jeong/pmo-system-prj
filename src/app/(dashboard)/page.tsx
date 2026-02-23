@@ -14,8 +14,10 @@ import {
   useWorkforceSummary,
   useRecentUpdates,
 } from "@/hooks/use-dashboard";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
   const { data: summary, isLoading: summaryLoading } = useDashboardSummary();
   const { data: workforce, isLoading: workforceLoading } =
     useWorkforceSummary();
@@ -25,8 +27,8 @@ export default function DashboardPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Dashboard"
-        description="Overview of your organization's projects and workforce"
+        title={t("pages.dashboard.title")}
+        description={t("pages.dashboard.description")}
       />
 
       {/* Summary Metrics Cards */}
@@ -47,10 +49,10 @@ export default function DashboardPage() {
               className="text-primary"
             />
             <MetricCard
-              title="Delayed"
-              value={summary?.delayedProjects ?? 0}
+              title="Blocked"
+              value={summary?.blockedProjects ?? 0}
               icon={AlertTriangle}
-              className="text-warning"
+              className="text-destructive"
             />
             <MetricCard
               title="Completed"
@@ -153,19 +155,19 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Delayed Projects Alert */}
-      {summary && summary.delayedProjects > 0 && (
-        <Card className="mt-6 border-warning/50">
+      {/* Blocked Projects Alert */}
+      {summary && summary.blockedProjects > 0 && (
+        <Card className="mt-6 border-destructive/50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-warning">
+            <CardTitle className="flex items-center gap-2 text-base text-destructive">
               <AlertTriangle className="h-4 w-4" />
-              Delayed Projects ({summary.delayedProjects})
+              Blocked Projects ({summary.blockedProjects})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {summary.delayedProjects} project
-              {summary.delayedProjects > 1 ? "s are" : " is"} currently delayed.
+              {summary.blockedProjects} project
+              {summary.blockedProjects > 1 ? "s are" : " is"} currently blocked.
               Review the projects page for details.
             </p>
           </CardContent>

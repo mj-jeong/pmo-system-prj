@@ -37,8 +37,10 @@ import { RoleGuard } from "@/components/auth/role-guard";
 import { useProjects, useCreateProject } from "@/hooks/use-projects";
 import type { ProjectResponse } from "@/types/project";
 import type { ProjectStatus } from "@/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function ProjectsPage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -115,8 +117,8 @@ export default function ProjectsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Projects"
-        description="Manage your organization's projects"
+        title={t("pages.projects.title")}
+        description={t("pages.projects.description")}
         actions={
           <RoleGuard role="ADMIN">
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -158,8 +160,9 @@ export default function ProjectsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="PLANNED">Planned</SelectItem>
             <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="DELAYED">Delayed</SelectItem>
+            <SelectItem value="BLOCKED">Blocked</SelectItem>
             <SelectItem value="COMPLETED">Completed</SelectItem>
           </SelectContent>
         </Select>

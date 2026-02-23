@@ -4,6 +4,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import type { CreateOrganizationInput, UpdateOrganizationInput } from "@/lib/validators/organization";
+import { recordAudit } from "@/lib/domain/audit";
 
 export const organizationService = {
   /**
@@ -48,12 +49,27 @@ export const organizationService = {
 
   /**
    * Update the current organization.
+   * actorId is required for audit logging.
    */
-  async updateOrganization(organizationId: string, data: UpdateOrganizationInput) {
-    return prisma.organization.update({
+  async updateOrganization(
+    organizationId: string,
+    actorId: string,
+    data: UpdateOrganizationInput
+  ) {
+    const updated = await prisma.organization.update({
       where: { id: organizationId },
       data,
     });
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: "ORG_SETTINGS_UPDATED",
+      entityType: "Organization",
+      entityId: organizationId,
+    });
+
+    return updated;
   },
 
   /**

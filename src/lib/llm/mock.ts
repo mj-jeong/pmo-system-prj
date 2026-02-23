@@ -40,7 +40,7 @@ function generateMockNarrative(reportContext: ReportContext): NarrativeResult {
   const { projects, updates, attendance, timeOff, analysis, periodStart, periodEnd, organizationName } = reportContext;
 
   const totalProjects = projects.length;
-  const delayedCount = analysis.delayedProjects.length;
+  const blockedCount = analysis.delayedProjects.length;
   const inProgressCount = projects.filter((p) => p.status === "IN_PROGRESS").length;
   const completedCount = projects.filter((p) => p.status === "COMPLETED").length;
 
@@ -54,18 +54,18 @@ function generateMockNarrative(reportContext: ReportContext): NarrativeResult {
   const pendingLeaves = timeOff.filter((t) => t.status === "PENDING").length;
 
   // Project names for display
-  const delayedProjectNames = analysis.delayedProjects.map((d) => d.projectName);
+  const blockedProjectNames = analysis.delayedProjects.map((d) => d.projectName);
   const gapProjectNames = analysis.updateGaps.map((g) => g.projectName);
 
   const executiveSummary = `> **MOCK REPORT - Development Mode** (no LLM API calls were made)
 
 This weekly report covers the period **${periodStart}** to **${periodEnd}** for **${organizationName}**.
 
-**Portfolio Summary**: ${totalProjects} project(s) tracked - ${inProgressCount} in progress, ${delayedCount} delayed, ${completedCount} completed.
+**Portfolio Summary**: ${totalProjects} project(s) tracked - ${inProgressCount} in progress, ${blockedCount} blocked, ${completedCount} completed.
 
 **Workforce**: Average attendance rate of ${avgAttendance}% across the period. ${approvedLeaves} approved leave(s), ${pendingLeaves} pending request(s).
 
-${delayedCount > 0 ? `**Key Risks**: ${delayedCount} project(s) flagged as delayed: ${delayedProjectNames.join(", ")}.` : "**Key Risks**: No projects currently flagged as delayed."}
+${blockedCount > 0 ? `**Key Risks**: ${blockedCount} project(s) flagged as blocked: ${blockedProjectNames.join(", ")}.` : "**Key Risks**: No projects currently blocked."}
 
 ${gapProjectNames.length > 0 ? `**Update Gaps**: ${gapProjectNames.length} project(s) with no updates during this period: ${gapProjectNames.join(", ")}.` : ""}`;
 
@@ -82,7 +82,7 @@ ${projects.map((p) => {
 - **Status**: ${p.status} | **Progress**: ${p.progress}%
 - **Timeline**: ${p.startDate || "N/A"} to ${p.endDate || "N/A"}
 - **Updates this period**: ${projectUpdates.length} update(s)
-${isDelayed ? "- **Risk**: Project is flagged as DELAYED" : ""}
+${isDelayed ? "- **Risk**: Project is BLOCKED" : ""}
 ${hasGap ? "- **Warning**: No updates recorded during this period" : ""}`;
   }).join("\n\n")}`;
 
@@ -125,7 +125,7 @@ ${projectNarrative}
 
 ## Risks & Blockers
 
-${delayedCount > 0 ? `### Delayed Projects\n${delayedProjectNames.map((n) => `- [ ] Review and remediate: **${n}**`).join("\n")}` : "No delayed projects."}
+${blockedCount > 0 ? `### Blocked Projects\n${blockedProjectNames.map((n) => `- [ ] Review and unblock: **${n}**`).join("\n")}` : "No blocked projects."}
 
 ${gapProjectNames.length > 0 ? `### Update Gaps\n${gapProjectNames.map((n) => `- [ ] Request status update from: **${n}**`).join("\n")}` : "No update gaps detected."}
 

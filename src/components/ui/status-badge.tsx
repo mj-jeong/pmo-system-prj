@@ -15,10 +15,12 @@ const statusBadgeVariants = cva(
     variants: {
       status: {
         // Project statuses
+        PLANNED:
+          "border-transparent bg-secondary/15 text-secondary-foreground",
         IN_PROGRESS:
           "border-transparent bg-primary/15 text-primary",
-        DELAYED:
-          "border-transparent bg-warning/15 text-warning",
+        BLOCKED:
+          "border-transparent bg-destructive/15 text-destructive",
         COMPLETED:
           "border-transparent bg-success/15 text-success",
 
@@ -60,8 +62,9 @@ const statusBadgeVariants = cva(
 // Human-readable labels for each status value
 const STATUS_LABELS: Record<string, string> = {
   // Project
+  PLANNED: "Planned",
   IN_PROGRESS: "In Progress",
-  DELAYED: "Delayed",
+  BLOCKED: "Blocked",
   COMPLETED: "Completed",
   // Attendance
   CHECKED_IN: "Checked In",

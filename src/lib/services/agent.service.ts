@@ -102,6 +102,33 @@ export interface ReportDetail extends ReportListItem {
   draftMarkdown: string;
   publishedMarkdown: string | null;
   structuredData: any;
+  reasoningTrace: {
+    inputSummary: {
+      projectCount: number;
+      updateCount: number;
+      period: { start: string; end: string };
+    };
+    appliedRules: Array<{
+      ruleId: string;
+      name: string;
+      triggered: boolean;
+      severity: "INFO" | "WARNING" | "CRITICAL";
+      score: number;
+      reason: string;
+      affectedItems: string[];
+    }>;
+    riskScore: number;
+  } | null;
+  comparisonData: {
+    previousReportId: string;
+    previousPeriod: { start: string; end: string };
+    deltas: {
+      projectCount: number;
+      blockedCount: number;
+      avgProgress: number;
+      riskScore: number;
+    };
+  } | null;
 }
 
 export interface AgentRunFilter {

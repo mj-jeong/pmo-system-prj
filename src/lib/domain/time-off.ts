@@ -5,6 +5,7 @@
 
 import { prisma } from "@/lib/db/prisma";
 import type { CreateTimeOffInput, UpdateTimeOffInput } from "@/lib/validators/time-off";
+import { recordAudit } from "@/lib/domain/audit";
 
 export const timeOffService = {
   /**
@@ -139,8 +140,9 @@ export const timeOffService = {
 
   /**
    * Approve a time-off request (ADMIN/OWNER only).
+   * actorId is required for audit logging.
    */
-  async approveTimeOff(timeOffId: string, organizationId: string) {
+  async approveTimeOff(timeOffId: string, organizationId: string, actorId: string) {
     const timeOff = await prisma.timeOff.findFirst({
       where: { id: timeOffId, organizationId },
     });
@@ -150,21 +152,30 @@ export const timeOffService = {
       return { error: "NOT_PENDING" as const };
     }
 
-    return {
-      data: await prisma.timeOff.update({
-        where: { id: timeOffId },
-        data: { status: "APPROVED" },
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-        },
-      }),
-    };
+    const updated = await prisma.timeOff.update({
+      where: { id: timeOffId },
+      data: { status: "APPROVED" },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: "TIME_OFF_APPROVED",
+      entityType: "TimeOff",
+      entityId: timeOffId,
+    });
+
+    return { data: updated };
   },
 
   /**
    * Reject a time-off request (ADMIN/OWNER only).
+   * actorId is required for audit logging.
    */
-  async rejectTimeOff(timeOffId: string, organizationId: string) {
+  async rejectTimeOff(timeOffId: string, organizationId: string, actorId: string) {
     const timeOff = await prisma.timeOff.findFirst({
       where: { id: timeOffId, organizationId },
     });
@@ -174,14 +185,22 @@ export const timeOffService = {
       return { error: "NOT_PENDING" as const };
     }
 
-    return {
-      data: await prisma.timeOff.update({
-        where: { id: timeOffId },
-        data: { status: "REJECTED" },
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-        },
-      }),
-    };
+    const updated = await prisma.timeOff.update({
+      where: { id: timeOffId },
+      data: { status: "REJECTED" },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: "TIME_OFF_REJECTED",
+      entityType: "TimeOff",
+      entityId: timeOffId,
+    });
+
+    return { data: updated };
   },
 };

@@ -22,8 +22,10 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { useReports } from "@/hooks/use-reports";
 import type { ReportListItem, ReportStatus } from "@/lib/services/agent.service";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function ReportsPage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -110,8 +112,8 @@ export default function ReportsPage() {
     <RoleGuard role="ADMIN">
       <PageContainer>
         <PageHeader
-          title="Reports"
-          description="View and manage AI-generated PMO reports"
+          title={t("pages.reports.title")}
+          description={t("pages.reports.description")}
           actions={
             <Link href="/reports/generate">
               <Button>

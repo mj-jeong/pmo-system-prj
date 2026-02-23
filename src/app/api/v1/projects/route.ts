@@ -37,7 +37,7 @@ export const GET = withOrgScope(async (req, { organizationId }) => {
  * Create a new project (OWNER or ADMIN only).
  */
 export const POST = withOrgScope(
-  requireAdmin(async (req, { organizationId }) => {
+  requireAdmin(async (req, { organizationId, session }) => {
     try {
       const body = await req.json();
 
@@ -50,7 +50,7 @@ export const POST = withOrgScope(
         return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
       }
 
-      const project = await projectService.createProject(parsed.data, organizationId);
+      const project = await projectService.createProject(parsed.data, organizationId, session.id);
 
       return Response.json(createSuccessResponse(project), { status: 201 });
     } catch (error) {

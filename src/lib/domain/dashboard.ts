@@ -29,7 +29,8 @@ export const dashboardService = {
     });
 
     const totalProjects = projects.length;
-    const delayedProjects = projects.filter((p) => p.status === "DELAYED").length;
+    const blockedProjects = projects.filter((p) => p.status === "BLOCKED").length;
+    const plannedProjects = projects.filter((p) => p.status === "PLANNED").length;
     const completedProjects = projects.filter((p) => p.status === "COMPLETED").length;
     const inProgressProjects = projects.filter((p) => p.status === "IN_PROGRESS").length;
     const averageProgress =
@@ -39,7 +40,8 @@ export const dashboardService = {
 
     return {
       totalProjects,
-      delayedProjects,
+      blockedProjects,
+      plannedProjects,
       completedProjects,
       inProgressProjects,
       averageProgress,

@@ -4,13 +4,15 @@
 
 import { prisma } from "@/lib/db/prisma";
 import type { CreateProjectInput, UpdateProjectInput } from "@/lib/validators/project";
+import { recordAudit } from "@/lib/domain/audit";
 
 export const projectService = {
   /**
    * Create a new project within the organization.
+   * actorId is required for audit logging.
    */
-  async createProject(data: CreateProjectInput, organizationId: string) {
-    return prisma.project.create({
+  async createProject(data: CreateProjectInput, organizationId: string, actorId: string) {
+    const project = await prisma.project.create({
       data: {
         name: data.name,
         description: data.description,
@@ -21,6 +23,16 @@ export const projectService = {
         organizationId,
       },
     });
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: "PROJECT_CREATED",
+      entityType: "Project",
+      entityId: project.id,
+    });
+
+    return project;
   },
 
   /**
@@ -85,8 +97,15 @@ export const projectService = {
 
   /**
    * Update a project, scoped to organization.
+   * actorId is required for audit logging.
+   * Records PROJECT_STATUS_CHANGED when status changes, PROJECT_UPDATED otherwise.
    */
-  async updateProject(projectId: string, organizationId: string, data: UpdateProjectInput) {
+  async updateProject(
+    projectId: string,
+    organizationId: string,
+    actorId: string,
+    data: UpdateProjectInput
+  ) {
     // First verify the project belongs to this organization
     const project = await prisma.project.findFirst({
       where: { id: projectId, organizationId, deletedAt: null },
@@ -94,7 +113,7 @@ export const projectService = {
 
     if (!project) return null;
 
-    return prisma.project.update({
+    const updated = await prisma.project.update({
       where: { id: projectId },
       data: {
         ...(data.name !== undefined && { name: data.name }),
@@ -105,22 +124,48 @@ export const projectService = {
         ...(data.progress !== undefined && { progress: data.progress }),
       },
     });
+
+    const isStatusChanged = data.status !== undefined && data.status !== project.status;
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: isStatusChanged ? "PROJECT_STATUS_CHANGED" : "PROJECT_UPDATED",
+      entityType: "Project",
+      entityId: projectId,
+      meta: isStatusChanged
+        ? { previousStatus: project.status, newStatus: data.status }
+        : undefined,
+    });
+
+    return updated;
   },
 
   /**
    * Soft-delete a project, scoped to organization.
+   * actorId is required for audit logging.
    */
-  async deleteProject(projectId: string, organizationId: string) {
+  async deleteProject(projectId: string, organizationId: string, actorId: string) {
     const project = await prisma.project.findFirst({
       where: { id: projectId, organizationId, deletedAt: null },
     });
 
     if (!project) return null;
 
-    return prisma.project.update({
+    const deleted = await prisma.project.update({
       where: { id: projectId },
       data: { deletedAt: new Date() },
     });
+
+    await recordAudit({
+      organizationId,
+      actorId,
+      action: "PROJECT_DELETED",
+      entityType: "Project",
+      entityId: projectId,
+    });
+
+    return deleted;
   },
 
   /**

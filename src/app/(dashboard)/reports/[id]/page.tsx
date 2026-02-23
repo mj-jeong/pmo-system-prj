@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, CheckCircle } from "lucide-react";
+import { ArrowLeft, ExternalLink, CheckCircle, ChevronDown, ChevronUp, AlertTriangle, AlertCircle, Info, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { format } from "date-fns";
 
 import { PageContainer } from "@/components/layout/page-container";
@@ -16,11 +16,50 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { ReportMarkdownViewer } from "@/components/reports/report-markdown-viewer";
 import { useReport, usePublishReport } from "@/hooks/use-reports";
+import { cn } from "@/lib/utils";
+
+// ---------------------------------------------------------------------------
+// Severity helpers
+// ---------------------------------------------------------------------------
+
+const SEVERITY_CONFIG = {
+  CRITICAL: {
+    icon: AlertCircle,
+    className: "text-red-600 dark:text-red-400",
+    badgeClass: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    label: "CRITICAL",
+  },
+  WARNING: {
+    icon: AlertTriangle,
+    className: "text-yellow-600 dark:text-yellow-400",
+    badgeClass: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+    label: "WARNING",
+  },
+  INFO: {
+    icon: Info,
+    className: "text-blue-600 dark:text-blue-400",
+    badgeClass: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+    label: "INFO",
+  },
+} as const;
+
+function DeltaBadge({ value, unit = "" }: { value: number; unit?: string }) {
+  if (value === 0) return <span className="flex items-center gap-1 text-muted-foreground"><Minus className="h-3 w-3" />변화 없음</span>;
+  const positive = value > 0;
+  const Icon = positive ? TrendingUp : TrendingDown;
+  return (
+    <span className={cn("flex items-center gap-1 font-medium", positive ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400")}>
+      <Icon className="h-3 w-3" />
+      {positive ? "+" : ""}{value}{unit}
+    </span>
+  );
+}
 
 export default function ReportDetailPage() {
   const params = useParams();
@@ -28,6 +67,7 @@ export default function ReportDetailPage() {
   const reportId = params.id as string;
 
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
+  const [analysisOpen, setAnalysisOpen] = useState(false);
 
   const { data: report, isLoading } = useReport(reportId);
   const publishReport = usePublishReport();
@@ -153,6 +193,122 @@ export default function ReportDetailPage() {
         <div className="mt-6">
           <ReportMarkdownViewer markdown={markdown} />
         </div>
+
+        {/* Analysis Details Accordion (Phase 2) */}
+        {report.reasoningTrace && (
+          <Card className="mt-6">
+            <CardHeader
+              className="cursor-pointer select-none"
+              onClick={() => setAnalysisOpen((o) => !o)}
+            >
+              <CardTitle className="flex items-center justify-between text-base">
+                <span>분석 상세 (AI 판단 근거)</span>
+                {analysisOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </CardTitle>
+            </CardHeader>
+
+            {analysisOpen && (
+              <CardContent className="space-y-4">
+                {/* Input Summary */}
+                <div className="text-sm text-muted-foreground space-y-1">
+                  <p><span className="font-medium text-foreground">분석 기간:</span>{" "}
+                    {format(new Date(report.reasoningTrace.inputSummary.period.start), "MM/dd")} ~{" "}
+                    {format(new Date(report.reasoningTrace.inputSummary.period.end), "MM/dd")}
+                  </p>
+                  <p><span className="font-medium text-foreground">대상 프로젝트:</span>{" "}
+                    {report.reasoningTrace.inputSummary.projectCount}개
+                  </p>
+                  <p><span className="font-medium text-foreground">업데이트 수:</span>{" "}
+                    {report.reasoningTrace.inputSummary.updateCount}건
+                  </p>
+                </div>
+
+                {/* Risk Score */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-medium">종합 리스크 스코어</span>
+                    <span className={cn("text-sm font-bold",
+                      report.reasoningTrace.riskScore >= 70 ? "text-red-600" :
+                      report.reasoningTrace.riskScore >= 40 ? "text-yellow-600" : "text-green-600"
+                    )}>
+                      {report.reasoningTrace.riskScore} / 100
+                    </span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className={cn("h-2 rounded-full transition-all",
+                        report.reasoningTrace.riskScore >= 70 ? "bg-red-500" :
+                        report.reasoningTrace.riskScore >= 40 ? "bg-yellow-500" : "bg-green-500"
+                      )}
+                      style={{ width: `${report.reasoningTrace.riskScore}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Applied Rules */}
+                <div>
+                  <p className="text-sm font-medium mb-2">적용된 분석 룰</p>
+                  <div className="space-y-2">
+                    {report.reasoningTrace.appliedRules.map((rule) => {
+                      const config = SEVERITY_CONFIG[rule.severity];
+                      const SeverityIcon = config.icon;
+                      return (
+                        <div
+                          key={rule.ruleId}
+                          className={cn(
+                            "flex items-start gap-3 rounded-md border p-3 text-sm",
+                            rule.triggered ? "border-border bg-muted/30" : "border-border/50 opacity-60"
+                          )}
+                        >
+                          <SeverityIcon className={cn("h-4 w-4 mt-0.5 shrink-0", config.className)} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium">{rule.name}</span>
+                              <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", config.badgeClass)}>
+                                {config.label}
+                              </span>
+                              {!rule.triggered && (
+                                <span className="text-xs text-muted-foreground">미발동</span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-muted-foreground">{rule.reason}</p>
+                          </div>
+                          <span className="shrink-0 text-xs text-muted-foreground">{rule.score}점</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Comparison Data */}
+                {report.comparisonData && (
+                  <div>
+                    <p className="text-sm font-medium mb-2">
+                      전주 대비 변화
+                      <span className="text-xs text-muted-foreground ml-2">
+                        ({format(new Date(report.comparisonData.previousPeriod.start), "MM/dd")} ~{" "}
+                        {format(new Date(report.comparisonData.previousPeriod.end), "MM/dd")} 기준)
+                      </span>
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      {[
+                        { label: "프로젝트 수", value: report.comparisonData.deltas.projectCount, unit: "개" },
+                        { label: "BLOCKED", value: report.comparisonData.deltas.blockedCount, unit: "개" },
+                        { label: "평균 진척도", value: report.comparisonData.deltas.avgProgress, unit: "%" },
+                        { label: "리스크 스코어", value: report.comparisonData.deltas.riskScore, unit: "점" },
+                      ].map((item) => (
+                        <div key={item.label} className="rounded-md border p-3 text-sm">
+                          <p className="text-muted-foreground text-xs">{item.label}</p>
+                          <DeltaBadge value={item.value} unit={item.unit} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            )}
+          </Card>
+        )}
 
         {/* Publish Confirmation Dialog */}
         <Dialog open={publishDialogOpen} onOpenChange={setPublishDialogOpen}>

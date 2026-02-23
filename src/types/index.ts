@@ -13,7 +13,7 @@ export type RoleName = "OWNER" | "ADMIN" | "MEMBER";
 // Project Types
 // ============================================================================
 
-export type ProjectStatus = "IN_PROGRESS" | "DELAYED" | "COMPLETED";
+export type ProjectStatus = "PLANNED" | "IN_PROGRESS" | "BLOCKED" | "COMPLETED";
 
 export interface ProjectFilter extends PaginationParams {
   status?: ProjectStatus;
@@ -52,7 +52,7 @@ export interface TimeOffFilter extends PaginationParams {
 
 export interface DashboardSummary {
   totalProjects: number;
-  delayedProjects: number;
+  blockedProjects: number;
   completedProjects: number;
   inProgressProjects: number;
   averageProgress: number;

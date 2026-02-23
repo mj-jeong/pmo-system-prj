@@ -45,8 +45,10 @@ import {
 } from "@/hooks/use-time-off";
 import type { TimeOffWithUser } from "@/lib/services/time-off.service";
 import type { TimeOffStatus } from "@/types";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function TimeOffPage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -140,8 +142,8 @@ export default function TimeOffPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Time Off"
-        description="Manage time-off requests"
+        title={t("pages.timeOff.title")}
+        description={t("pages.timeOff.description")}
         actions={
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>

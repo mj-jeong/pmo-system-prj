@@ -98,7 +98,7 @@ async function main() {
     data: {
       name: "Mobile App MVP",
       description: "First version of the mobile application",
-      status: "DELAYED",
+      status: "BLOCKED",
       progress: 30,
       startDate: new Date("2026-01-01"),
       endDate: new Date("2026-02-28"),

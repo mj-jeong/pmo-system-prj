@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Settings, Trash2 } from "lucide-react";
+import { Settings, Trash2, Clock } from "lucide-react";
 
 import {
   updateOrganizationSchema,
@@ -16,6 +16,13 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Card,
   CardContent,
@@ -34,18 +41,41 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
+import { RoleGuard } from "@/components/auth/role-guard";
 import {
   useOrganization,
   useUpdateOrganization,
   useDeleteOrganization,
+  useWorkspaceSettings,
+  useUpdateWorkspaceSettings,
 } from "@/hooks/use-organization";
+import type { WeekDay } from "@/lib/services/organization.service";
+import { useLanguage } from "@/lib/i18n/language-context";
+
+const WEEK_DAYS: { value: WeekDay; label: string }[] = [
+  { value: "MON", label: "Monday" },
+  { value: "TUE", label: "Tuesday" },
+  { value: "WED", label: "Wednesday" },
+  { value: "THU", label: "Thursday" },
+  { value: "FRI", label: "Friday" },
+  { value: "SAT", label: "Saturday" },
+  { value: "SUN", label: "Sunday" },
+];
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 export default function SettingsPage() {
+  const { t } = useLanguage();
   const router = useRouter();
   const { data: org, isLoading } = useOrganization();
   const updateOrg = useUpdateOrganization();
   const deleteOrg = useDeleteOrganization();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { data: wsSettings, isLoading: wsLoading } = useWorkspaceSettings();
+  const updateWsSettings = useUpdateWorkspaceSettings();
+  const [wsStart, setWsStart] = useState<string>("");
+  const [wsEnd, setWsEnd] = useState<string>("");
+  const [wsReportDay, setWsReportDay] = useState<string>("");
 
   const {
     register,
@@ -61,6 +91,18 @@ export default function SettingsPage() {
 
   async function onSubmit(data: UpdateOrganizationInput) {
     await updateOrg.mutateAsync(data);
+  }
+
+  async function handleSaveWorkspaceSettings() {
+    const payload: {
+      workingHoursStart?: number;
+      workingHoursEnd?: number;
+      weeklyReportDay?: WeekDay;
+    } = {};
+    if (wsStart !== "") payload.workingHoursStart = Number(wsStart);
+    if (wsEnd !== "") payload.workingHoursEnd = Number(wsEnd);
+    if (wsReportDay !== "") payload.weeklyReportDay = wsReportDay as WeekDay;
+    await updateWsSettings.mutateAsync(payload);
   }
 
   async function handleDelete() {
@@ -80,8 +122,8 @@ export default function SettingsPage() {
   return (
     <PageContainer>
       <PageHeader
-        title="Organization Settings"
-        description="Manage your organization details"
+        title={t("pages.settings.title")}
+        description={t("pages.settings.description")}
       />
 
       {/* Update Organization */}
@@ -134,6 +176,108 @@ export default function SettingsPage() {
             </Button>
           </CardFooter>
         </form>
+      </Card>
+
+      {/* Workspace Settings */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Clock className="h-4 w-4" />
+            Workspace Settings
+          </CardTitle>
+          <CardDescription>
+            Configure working hours and weekly report schedule.
+            {wsSettings?.updatedAt && (
+              <span className="ml-2 text-xs text-muted-foreground">
+                Last updated: {new Date(wsSettings.updatedAt).toLocaleDateString()}
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {wsLoading ? (
+            <LoadingSkeleton variant="text" count={3} />
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Work Start Hour</Label>
+                  <Select
+                    value={wsStart || String(wsSettings?.workingHoursStart ?? "")}
+                    onValueChange={setWsStart}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select hour" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={String(h)}>
+                          {String(h).padStart(2, "0")}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Work End Hour</Label>
+                  <Select
+                    value={wsEnd || String(wsSettings?.workingHoursEnd ?? "")}
+                    onValueChange={setWsEnd}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select hour" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {HOURS.map((h) => (
+                        <SelectItem key={h} value={String(h)}>
+                          {String(h).padStart(2, "0")}:00
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Weekly Report Day</Label>
+                <Select
+                  value={wsReportDay || (wsSettings?.weeklyReportDay ?? "")}
+                  onValueChange={setWsReportDay}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Select day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEEK_DAYS.map((d) => (
+                      <SelectItem key={d.value} value={d.value}>
+                        {d.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  The day when weekly PMO reports are automatically generated.
+                </p>
+              </div>
+            </>
+          )}
+        </CardContent>
+        <CardFooter>
+          <RoleGuard
+            role="OWNER"
+            fallback={
+              <p className="text-sm text-muted-foreground">
+                Only the organization owner can change workspace settings.
+              </p>
+            }
+          >
+            <Button
+              onClick={handleSaveWorkspaceSettings}
+              disabled={updateWsSettings.isPending}
+            >
+              {updateWsSettings.isPending ? "Saving..." : "Save Workspace Settings"}
+            </Button>
+          </RoleGuard>
+        </CardFooter>
       </Card>
 
       {/* Danger Zone */}

@@ -8,6 +8,8 @@ import { agentTools } from "./agent-tools";
 import type { CollectionParams, ProjectSnapshot, ProjectUpdateRecord, AttendanceDaySummary, TimeOffSummaryRecord } from "./agent-tools";
 import { analyzeAll } from "./agent-analysis";
 import type { AnalysisResult } from "./agent-analysis";
+import { computeComparison } from "./report-comparison";
+import type { ComparisonData } from "./report-comparison";
 import { generateNarrative } from "@/lib/ai/openai-client";
 import type { ReportContext } from "@/lib/ai/prompts";
 import type { GenerateReportInput } from "@/lib/validators/agent";
@@ -178,6 +180,8 @@ export async function executeRun(
   let collectedData: CollectedData | null = null;
   let analysisResult: AnalysisResult | null = null;
   let narrativeResult: { executiveSummary: string; projectNarrative: string; workforceNarrative: string; markdown: string } | null = null;
+  let reasoningTrace: Record<string, unknown> | null = null;
+  let comparisonData: ComparisonData | null = null;
 
   try {
     // -----------------------------------------------------------------------
@@ -291,11 +295,63 @@ export async function executeRun(
         try {
           analysisResult = analyzeAll(collectedData);
 
+          // Phase 2: reasoningTrace 구성
+          reasoningTrace = {
+            inputSummary: {
+              projectCount: collectedData.projects.length,
+              updateCount: collectedData.updates.length,
+              period: {
+                start: input.periodStart.toISOString(),
+                end: input.periodEnd.toISOString(),
+              },
+            },
+            appliedRules: analysisResult.ruleResults,
+            riskScore: analysisResult.riskScore,
+          };
+
+          // Phase 2: 이전 PUBLISHED 리포트 조회 → comparisonData 구성
+          try {
+            const previousReport = await prisma.report.findFirst({
+              where: {
+                organizationId,
+                status: "PUBLISHED",
+                periodEnd: { lt: input.periodStart },
+              },
+              orderBy: { periodEnd: "desc" },
+              select: {
+                id: true,
+                periodStart: true,
+                periodEnd: true,
+                structuredData: true,
+                reasoningTrace: true,
+              },
+            });
+
+            if (previousReport) {
+              comparisonData = computeComparison(
+                analysisResult,
+                collectedData.projects.length,
+                previousReport as {
+                  id: string;
+                  periodStart: Date;
+                  periodEnd: Date;
+                  structuredData: unknown;
+                  reasoningTrace: unknown;
+                }
+              );
+            }
+          } catch {
+            // 비교 데이터 실패는 치명적이지 않으므로 무시
+            comparisonData = null;
+          }
+
           await completeStep(analyzeStep.id, {
             delayedProjectsCount: analysisResult.delayedProjects.length,
             updateGapsCount: analysisResult.updateGaps.length,
             attendanceAnomaliesCount: analysisResult.attendanceAnomalies.length,
             concentrationWarning: analysisResult.workforceImpact.concentrationWarning,
+            riskScore: analysisResult.riskScore,
+            triggeredRules: analysisResult.ruleResults.filter((r) => r.triggered).length,
           });
 
           // ---------------------------------------------------------------
@@ -348,6 +404,9 @@ export async function executeRun(
                     workforceNarrative: narrativeResult.workforceNarrative,
                     analysis: analysisResult,
                   })),
+                  // Phase 2: reasoning trace + comparison data
+                  reasoningTrace: reasoningTrace ? JSON.parse(JSON.stringify(reasoningTrace)) : undefined,
+                  comparisonData: comparisonData ? JSON.parse(JSON.stringify(comparisonData)) : undefined,
                   createdById: userId,
                 },
               });

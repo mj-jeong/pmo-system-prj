@@ -1,72 +1,158 @@
-// PMO System - User Invite API Route
-// POST /api/v1/users/invite - Invite member with role assignment (OWNER or ADMIN)
+// PMO System - User Invite API Route (Token-Based Multi-Delivery)
+// POST /api/v1/users/invite - Generate invitation token and deliver via selected method.
+// Supports: EMAIL (Resend), QR_CODE (SVG), LINK (URL only)
 
 import { NextRequest } from "next/server";
-import bcrypt from "bcryptjs";
 
 import { withOrgScope } from "@/lib/permissions/organization-scope";
 import { requireAdmin } from "@/lib/permissions/rbac";
 import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
-import { inviteUserSchema } from "@/lib/validators/user";
-import { userService } from "@/lib/domain/user";
+import { sendInviteSchema } from "@/lib/validators/user";
+import { prisma } from "@/lib/db/prisma";
+import { createInvitationToken, buildInviteUrl } from "@/lib/invite/token";
+import { generateInviteQRSvg } from "@/lib/invite/qrcode";
+import { sendInviteEmail } from "@/lib/email/index";
 import { createSuccessResponse } from "@/types/api";
 
 /**
  * POST /api/v1/users/invite
- * Invite a new member to the organization (OWNER or ADMIN).
- * ADMIN cannot invite with OWNER role.
+ * Generate an invitation token and deliver via specified method.
+ *
+ * Body:
+ *   { deliveryMethod: "EMAIL" | "QR_CODE" | "LINK", email?: string, role: "ADMIN" | "MEMBER" }
+ *
+ * Responses:
+ *   EMAIL:   { token, inviteUrl, expiresAt, deliveredTo: email }
+ *   QR_CODE: { token, inviteUrl, expiresAt, qrSvg: string }
+ *   LINK:    { token, inviteUrl, expiresAt }
  */
 export const POST = withOrgScope(
-  requireAdmin(async (req, { session, organizationId }) => {
+  requireAdmin(async (req: NextRequest, { session, organizationId }: { session: any; organizationId: string }) => {
     try {
       const body = await req.json();
 
-      const parsed = inviteUserSchema.safeParse(body);
+      const parsed = sendInviteSchema.safeParse(body);
       if (!parsed.success) {
         const details = parsed.error.errors.map((e) => ({
           field: e.path.join("."),
           message: e.message,
         }));
-        return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
+        return createErrorResponse(
+          ERROR_CODES.VALIDATION_ERROR,
+          "입력값이 올바르지 않습니다.",
+          400,
+          details
+        );
       }
 
-      const { email, name, password, role } = parsed.data;
+      const { deliveryMethod, email, role } = parsed.data;
 
-      // ADMIN cannot assign OWNER role
-      if (session.role === "ADMIN" && role === "ADMIN") {
-        // ADMIN can assign ADMIN (but not OWNER - already blocked by schema)
-        // This is fine per the permission matrix
+      // If email delivery: check email not already a member
+      if (deliveryMethod === "EMAIL" && email) {
+        const existing = await prisma.user.findFirst({
+          where: { email, organizationId, deletedAt: null },
+          select: { id: true },
+        });
+        if (existing) {
+          return createErrorResponse(
+            ERROR_CODES.EMAIL_ALREADY_EXISTS,
+            "이 이메일은 이미 조직의 멤버입니다.",
+            409
+          );
+        }
       }
 
-      // Check if email already exists in the organization
-      const emailTaken = await userService.isEmailTaken(email, organizationId);
-      if (emailTaken) {
-        return createErrorResponse(ERROR_CODES.EMAIL_ALREADY_EXISTS, "Email already exists in this organization.", 409);
+      // Find role record for the organization
+      const roleRecord = await prisma.role.findFirst({
+        where: { name: role, organizationId },
+        select: { id: true },
+      });
+      if (!roleRecord) {
+        return createErrorResponse(
+          ERROR_CODES.NOT_FOUND,
+          "역할을 찾을 수 없습니다.",
+          404
+        );
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Find inviting user's name for email template
+      const inviter = await prisma.user.findFirst({
+        where: { id: session.id, organizationId },
+        select: { name: true },
+      });
 
-      const user = await userService.inviteUser(
-        { email, name, hashedPassword },
-        role,
-        organizationId
-      );
+      // Create the invitation token
+      const tokenRecord = await createInvitationToken({
+        email,
+        organizationId,
+        roleId: roleRecord.id,
+        deliveryMethod,
+        invitedBy: session.id,
+      });
 
+      const inviteUrl = buildInviteUrl(tokenRecord.token);
+      const expiresAt = tokenRecord.expiresAt.toISOString();
+
+      // EMAIL delivery
+      if (deliveryMethod === "EMAIL" && email) {
+        try {
+          await sendInviteEmail({
+            to: email,
+            inviterName: inviter?.name ?? "관리자",
+            organizationName: tokenRecord.organization.name,
+            inviteUrl,
+            role,
+            expiresAt: tokenRecord.expiresAt,
+          });
+        } catch (emailError) {
+          console.error("[invite] Email send failed:", emailError);
+          // Don't fail the request — token is created, user can share link manually
+        }
+
+        return Response.json(
+          createSuccessResponse({
+            token: tokenRecord.token,
+            inviteUrl,
+            expiresAt,
+            deliveredTo: email,
+            deliveryMethod: "EMAIL",
+          }),
+          { status: 201 }
+        );
+      }
+
+      // QR_CODE delivery
+      if (deliveryMethod === "QR_CODE") {
+        const qrSvg = await generateInviteQRSvg(tokenRecord.token);
+        return Response.json(
+          createSuccessResponse({
+            token: tokenRecord.token,
+            inviteUrl,
+            expiresAt,
+            qrSvg,
+            deliveryMethod: "QR_CODE",
+          }),
+          { status: 201 }
+        );
+      }
+
+      // LINK delivery
       return Response.json(
         createSuccessResponse({
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role.name,
-          organizationId: user.organizationId,
-          createdAt: user.createdAt.toISOString(),
+          token: tokenRecord.token,
+          inviteUrl,
+          expiresAt,
+          deliveryMethod: "LINK",
         }),
         { status: 201 }
       );
     } catch (error) {
       console.error("[POST /api/v1/users/invite]", error);
-      return createErrorResponse(ERROR_CODES.INTERNAL_ERROR, "An unexpected error occurred.", 500);
+      return createErrorResponse(
+        ERROR_CODES.INTERNAL_ERROR,
+        "예기치 않은 오류가 발생했습니다.",
+        500
+      );
     }
   })
 );
