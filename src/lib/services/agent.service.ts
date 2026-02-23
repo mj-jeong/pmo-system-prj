@@ -9,7 +9,7 @@ import type { ApiResponse, PaginatedResponse } from "@/types/api";
 // ============================================================================
 
 export type AgentRunStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-export type AgentStepName = "PLAN" | "COLLECT" | "ANALYZE" | "SUMMARIZE" | "DRAFT";
+export type AgentStepName = "PLAN" | "COLLECT" | "ANALYZE" | "SUMMARIZE" | "DRAFT" | "REVIEW" | "ACTION";
 export type AgentStepStatus = "PENDING" | "RUNNING" | "COMPLETED" | "FAILED" | "SKIPPED";
 export type ReportStatus = "DRAFT" | "PUBLISHED";
 export type DetailLevel = "BRIEF" | "STANDARD" | "DETAILED";
@@ -40,6 +40,8 @@ export interface AgentRunListItem {
   startedAt: string | null;
   finishedAt: string | null;
   reportId: string | null;
+  retryCount: number;
+  parentRunId: string | null;
   createdAt: string;
   createdBy: {
     id: string;
@@ -193,4 +195,12 @@ export async function getReport(id: string) {
  */
 export async function publishReport(id: string) {
   return apiPost<ApiResponse<ReportDetail>>(`/reports/${id}/publish`);
+}
+
+/**
+ * Retry a FAILED agent run with same input parameters.
+ * POST /api/v1/agent/runs/[id]/retry
+ */
+export async function retryRun(runId: string) {
+  return apiPost<ApiResponse<GenerateReportResponse>>(`/agent/runs/${runId}/retry`);
 }

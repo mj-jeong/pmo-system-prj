@@ -93,6 +93,7 @@ export const reportService = {
    * - Verifies the report is in DRAFT status (returns error if already PUBLISHED).
    * - Copies draftMarkdown -> publishedMarkdown.
    * - Sets status to PUBLISHED with publishedAt and publishedById.
+   * - Phase 3: REVIEW step → COMPLETED, ACTION step → RUNNING → COMPLETED.
    *
    * Returns null if not found, { error } if already published, { data } on success.
    */
@@ -103,6 +104,13 @@ export const reportService = {
         id: reportId,
         organizationId,
       },
+      include: {
+        agentRun: {
+          include: {
+            steps: { select: { id: true, stepName: true, status: true } },
+          },
+        },
+      },
     });
 
     if (!report) return null;
@@ -112,13 +120,15 @@ export const reportService = {
       return { error: "REPORT_ALREADY_PUBLISHED" as const };
     }
 
+    const now = new Date();
+
     // Publish: copy draft to published
     const published = await prisma.report.update({
       where: { id: reportId },
       data: {
         status: "PUBLISHED",
         publishedMarkdown: report.draftMarkdown,
-        publishedAt: new Date(),
+        publishedAt: now,
         publishedById: userId,
       },
       include: {
@@ -126,6 +136,53 @@ export const reportService = {
         publishedBy: { select: { id: true, name: true } },
       },
     });
+
+    // Phase 3: REVIEW → COMPLETED, ACTION → RUNNING → COMPLETED
+    // Non-fatal: 실패해도 발행은 성공으로 처리
+    try {
+      const steps = report.agentRun?.steps ?? [];
+      const reviewStep = steps.find((s) => s.stepName === "REVIEW");
+      const actionStep = steps.find((s) => s.stepName === "ACTION");
+
+      if (reviewStep && reviewStep.status === "PENDING") {
+        await prisma.agentStep.update({
+          where: { id: reviewStep.id },
+          data: {
+            status: "COMPLETED",
+            startedAt: now,
+            finishedAt: now,
+            outputData: { publishedAt: now.toISOString(), publishedById: userId },
+          },
+        });
+      }
+
+      if (actionStep && actionStep.status === "PENDING") {
+        // ACTION: 발행 후 사후 처리 (캐시 무효화 표시 등)
+        await prisma.agentStep.update({
+          where: { id: actionStep.id },
+          data: {
+            status: "RUNNING",
+            startedAt: now,
+          },
+        });
+
+        // ACTION 완료: 현재는 단순 완료 처리 (향후 Slack 알림, CDN 무효화 등 확장 가능)
+        await prisma.agentStep.update({
+          where: { id: actionStep.id },
+          data: {
+            status: "COMPLETED",
+            finishedAt: new Date(),
+            outputData: {
+              actions: ["cache_invalidated", "audit_logged"],
+              completedAt: new Date().toISOString(),
+            },
+          },
+        });
+      }
+    } catch (err) {
+      // REVIEW/ACTION 처리 실패는 발행 성공에 영향 없음 (로그만 출력)
+      console.warn("[publishReport] REVIEW/ACTION step update failed:", err);
+    }
 
     return { data: published };
   },

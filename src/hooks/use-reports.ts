@@ -120,3 +120,20 @@ export function useGenerateReport() {
     onError: handleApiError,
   });
 }
+
+/**
+ * Retry a FAILED agent run.
+ */
+export function useRetryRun() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (runId: string) => agentService.retryRun(runId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: agentRunKeys.all });
+      queryClient.invalidateQueries({ queryKey: reportKeys.all });
+      showSuccessToast("Retry started. A new run has been created.");
+    },
+    onError: handleApiError,
+  });
+}

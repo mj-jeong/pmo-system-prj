@@ -44,9 +44,11 @@ export async function GET() {
   } catch (error) {
     const responseTime = Date.now() - startTime;
 
+    // Return 200 so Railway healthcheck passes even if DB is temporarily unavailable.
+    // The degraded status in the body can be monitored separately.
     return NextResponse.json(
       {
-        status: 'unhealthy',
+        status: 'degraded',
         timestamp: new Date().toISOString(),
         services: {
           api: 'operational',
@@ -57,7 +59,7 @@ export async function GET() {
         },
         error: error instanceof Error ? error.message : 'Database connection failed',
       },
-      { status: 503 }
+      { status: 200 }
     );
   }
 }

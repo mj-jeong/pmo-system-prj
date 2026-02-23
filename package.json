@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "prisma migrate deploy && next start",
     "lint": "next lint",
     "validate-env": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/validate-env.ts",
     "db:migrate": "prisma migrate dev",

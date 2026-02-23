@@ -18,7 +18,7 @@ import type { GenerateReportInput } from "@/lib/validators/agent";
 // Types
 // ---------------------------------------------------------------------------
 
-type StepName = "PLAN" | "COLLECT" | "ANALYZE" | "SUMMARIZE" | "DRAFT";
+type StepName = "PLAN" | "COLLECT" | "ANALYZE" | "SUMMARIZE" | "DRAFT" | "REVIEW" | "ACTION";
 
 interface StepRecord {
   id: string;
@@ -30,6 +30,13 @@ interface ExecuteRunResult {
   reportId: string | null;
   status: "COMPLETED" | "FAILED";
   errorMessage: string | null;
+}
+
+export interface ExecuteRunOptions {
+  /** 재시도 시 원본 runId */
+  parentRunId?: string;
+  /** 재시도 횟수 (원본 run의 retryCount + 1) */
+  retryCount?: number;
 }
 
 interface CollectedData {
@@ -142,10 +149,12 @@ async function recordToolCall(
 export async function executeRun(
   organizationId: string,
   userId: string,
-  input: GenerateReportInput
+  input: GenerateReportInput,
+  options: ExecuteRunOptions = {}
 ): Promise<ExecuteRunResult> {
   // -------------------------------------------------------------------------
-  // Create AgentRun + 5 AgentStep records
+  // Create AgentRun + 7 AgentStep records
+  // PLAN → COLLECT → ANALYZE → SUMMARIZE → DRAFT → REVIEW(비동기) → ACTION
   // -------------------------------------------------------------------------
   const agentRun = await prisma.agentRun.create({
     data: {
@@ -153,6 +162,8 @@ export async function executeRun(
       createdById: userId,
       status: "RUNNING",
       startedAt: new Date(),
+      retryCount: options.retryCount ?? 0,
+      parentRunId: options.parentRunId ?? null,
       inputParams: {
         periodStart: input.periodStart.toISOString(),
         periodEnd: input.periodEnd.toISOString(),
@@ -162,7 +173,8 @@ export async function executeRun(
     },
   });
 
-  const stepNames: StepName[] = ["PLAN", "COLLECT", "ANALYZE", "SUMMARIZE", "DRAFT"];
+  // 7단계 파이프라인: PLAN~DRAFT(동기) + REVIEW~ACTION(비동기 - 발행 이벤트로 완료)
+  const stepNames: StepName[] = ["PLAN", "COLLECT", "ANALYZE", "SUMMARIZE", "DRAFT", "REVIEW", "ACTION"];
 
   const steps: StepRecord[] = [];
   for (const stepName of stepNames) {
@@ -439,26 +451,28 @@ export async function executeRun(
                 errorMessage: null,
               };
             } catch (error) {
-              await handleStepFailure(agentRun.id, draftStep.id, [], error);
+              // DRAFT 실패: REVIEW, ACTION도 SKIPPED 처리
+              const remainingStepIds = [steps[5].id, steps[6].id];
+              await handleStepFailure(agentRun.id, draftStep.id, remainingStepIds, error);
               return buildFailedResult(agentRun.id, error);
             }
           } catch (error) {
-            const remainingStepIds = [steps[4].id];
+            const remainingStepIds = [steps[4].id, steps[5].id, steps[6].id];
             await handleStepFailure(agentRun.id, summarizeStep.id, remainingStepIds, error);
             return buildFailedResult(agentRun.id, error);
           }
         } catch (error) {
-          const remainingStepIds = [steps[3].id, steps[4].id];
+          const remainingStepIds = [steps[3].id, steps[4].id, steps[5].id, steps[6].id];
           await handleStepFailure(agentRun.id, analyzeStep.id, remainingStepIds, error);
           return buildFailedResult(agentRun.id, error);
         }
       } catch (error) {
-        const remainingStepIds = [steps[2].id, steps[3].id, steps[4].id];
+        const remainingStepIds = [steps[2].id, steps[3].id, steps[4].id, steps[5].id, steps[6].id];
         await handleStepFailure(agentRun.id, collectStep.id, remainingStepIds, error);
         return buildFailedResult(agentRun.id, error);
       }
     } catch (error) {
-      const remainingStepIds = [steps[1].id, steps[2].id, steps[3].id, steps[4].id];
+      const remainingStepIds = [steps[1].id, steps[2].id, steps[3].id, steps[4].id, steps[5].id, steps[6].id];
       await handleStepFailure(agentRun.id, planStep.id, remainingStepIds, error);
       return buildFailedResult(agentRun.id, error);
     }

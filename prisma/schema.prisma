@@ -298,6 +298,8 @@ enum AgentStepName {
   ANALYZE
   SUMMARIZE
   DRAFT
+  REVIEW   // 관리자 검토 대기 (publish 이벤트로 완료)
+  ACTION   // 발행 후 사후 처리 (캐시 무효화 등)
 }
 
 enum AgentStepStatus {
@@ -335,6 +337,8 @@ model AgentRun {
   startedAt      DateTime?
   finishedAt     DateTime?
   reportId       String?        @unique
+  retryCount     Int            @default(0) // 재시도 횟수
+  parentRunId    String?        // 재시도 시 원본 AgentRun ID
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 

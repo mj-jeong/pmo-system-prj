@@ -1,8 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, FileText, RefreshCw } from "lucide-react";
+import { ArrowLeft, FileText, RefreshCw, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 
 import { PageContainer } from "@/components/layout/page-container";
@@ -11,13 +11,15 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { RoleGuard } from "@/components/auth/role-guard";
 import { AgentRunTimeline } from "@/components/reports/agent-run-timeline";
-import { useAgentRun } from "@/hooks/use-reports";
+import { useAgentRun, useRetryRun } from "@/hooks/use-reports";
 
 export default function AgentRunTracePage() {
   const params = useParams();
+  const router = useRouter();
   const runId = params.id as string;
 
   const { data: run, isLoading, refetch } = useAgentRun(runId);
+  const retryRun = useRetryRun();
 
   if (isLoading) {
     return (
@@ -49,6 +51,13 @@ export default function AgentRunTracePage() {
   const isRunning = run.status === "RUNNING";
   const isCompleted = run.status === "COMPLETED";
   const isFailed = run.status === "FAILED";
+
+  async function handleRetry() {
+    const result = await retryRun.mutateAsync(run.id);
+    if (result?.data?.runId) {
+      router.push(`/reports/runs/${result.data.runId}`);
+    }
+  }
 
   return (
     <RoleGuard role="ADMIN">
@@ -83,6 +92,17 @@ export default function AgentRunTracePage() {
               <Button variant="outline" size="sm" onClick={() => refetch()}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh
+              </Button>
+            )}
+            {isFailed && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRetry}
+                disabled={retryRun.isPending}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {retryRun.isPending ? "Retrying..." : "Retry"}
               </Button>
             )}
           </div>
@@ -151,8 +171,32 @@ export default function AgentRunTracePage() {
         {/* Error message */}
         {isFailed && run.errorMessage && (
           <div className="mt-6 p-4 rounded-md bg-destructive/10 text-destructive">
-            <p className="font-semibold">Error:</p>
-            <p className="mt-1 text-sm">{run.errorMessage}</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-semibold">Error:</p>
+                <p className="mt-1 text-sm">{run.errorMessage}</p>
+                {run.retryCount > 0 && (
+                  <p className="mt-1 text-xs opacity-70">
+                    Retry attempt #{run.retryCount}
+                    {run.parentRunId && (
+                      <Link href={`/reports/runs/${run.parentRunId}`} className="ml-1 underline">
+                        (View original run)
+                      </Link>
+                    )}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleRetry}
+                disabled={retryRun.isPending}
+                className="shrink-0"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {retryRun.isPending ? "Retrying..." : "Retry Run"}
+              </Button>
+            </div>
           </div>
         )}
 

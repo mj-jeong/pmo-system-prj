@@ -15,7 +15,7 @@ export interface AgentRunTimelineProps {
   steps: AgentStep[];
 }
 
-const STEP_ORDER: AgentStepName[] = ["PLAN", "COLLECT", "ANALYZE", "SUMMARIZE", "DRAFT"];
+const STEP_ORDER: AgentStepName[] = ["PLAN", "COLLECT", "ANALYZE", "SUMMARIZE", "DRAFT", "REVIEW", "ACTION"];
 
 const STEP_LABELS: Record<AgentStepName, string> = {
   PLAN: "Planning",
@@ -23,6 +23,8 @@ const STEP_LABELS: Record<AgentStepName, string> = {
   ANALYZE: "Analysis",
   SUMMARIZE: "Summarization",
   DRAFT: "Draft Generation",
+  REVIEW: "Admin Review",
+  ACTION: "Post-publish Actions",
 };
 
 export function AgentRunTimeline({ steps }: AgentRunTimelineProps) {
