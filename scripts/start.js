@@ -2,90 +2,65 @@
 /**
  * Railway production startup script.
  *
- * 1. Run `prisma migrate deploy`.
- * 2. If Prisma P3009 error (failed migrations blocking deployment):
- *    - Resolve each failed migration with --rolled-back
- *    - Retry `prisma migrate deploy`
- * 3. Start `next start`.
+ * 1. Directly fix any FAILED migration rows in _prisma_migrations via Prisma raw SQL.
+ *    (More reliable than `prisma migrate resolve` CLI which may not output errors)
+ * 2. Run `prisma migrate deploy`.
+ * 3. Run `next start`.
  */
 
-const { execSync, spawnSync } = require("child_process");
+"use strict";
+
+const { execSync } = require("child_process");
 
 function run(cmd) {
   console.log(`\n>> ${cmd}`);
   execSync(cmd, { stdio: "inherit" });
 }
 
-function tryMigrateDeploy() {
-  const result = spawnSync(
-    "npx",
-    ["prisma", "migrate", "deploy"],
-    { stdio: ["inherit", "pipe", "pipe"], encoding: "utf8" }
-  );
+async function fixFailedMigrations() {
+  console.log("\n>> Checking for failed migrations in _prisma_migrations...");
 
-  const output = (result.stdout || "") + (result.stderr || "");
+  let prisma;
+  try {
+    // PrismaClient is generated during `prisma generate` (runs in build phase)
+    const { PrismaClient } = require("@prisma/client");
+    prisma = new PrismaClient();
 
-  if (result.status === 0) {
-    process.stdout.write(output);
-    return true;
-  }
+    // Mark any FAILED (started but never finished or rolled-back) migration as rolled-back.
+    // This unblocks Prisma's P3009 check so migrate deploy can re-apply them.
+    const fixed = await prisma.$executeRawUnsafe(`
+      UPDATE "_prisma_migrations"
+      SET "rolled_back_at" = NOW()
+      WHERE "finished_at"    IS NULL
+        AND "rolled_back_at" IS NULL
+        AND "started_at"     IS NOT NULL
+    `);
 
-  // P3009: failed migrations are blocking new ones
-  if (output.includes("P3009")) {
-    process.stdout.write(output);
-    return false;
-  }
-
-  // Other error — fail hard
-  process.stderr.write(output);
-  process.exit(result.status || 1);
-}
-
-function resolveFailedMigrations(output) {
-  // Extract migration names from the error message
-  // Pattern: "The `20260223_phase1_core_enhancements` migration ... failed"
-  const matches = output.match(/`(\d{14}_[a-z_]+)`/g) || [];
-  const names = [...new Set(matches.map((m) => m.replace(/`/g, "")))];
-
-  if (names.length === 0) {
-    console.error("P3009 detected but could not extract migration names. Aborting.");
-    process.exit(1);
-  }
-
-  for (const name of names) {
-    console.log(`\n>> Resolving failed migration: ${name}`);
-    const r = spawnSync(
-      "npx",
-      ["prisma", "migrate", "resolve", "--rolled-back", name],
-      { stdio: "inherit", encoding: "utf8" }
-    );
-    if (r.status !== 0) {
-      console.warn(`   Warning: Could not resolve ${name} (may already be resolved)`);
+    if (fixed > 0) {
+      console.log(`   Fixed ${fixed} failed migration(s) — will be re-applied now.`);
+    } else {
+      console.log("   No failed migrations found.");
+    }
+  } catch (err) {
+    // Non-fatal: if we can't connect yet, migrate deploy will surface the real error.
+    console.warn(`   Could not check migrations: ${err.message}`);
+  } finally {
+    if (prisma) {
+      await prisma.$disconnect().catch(() => {});
     }
   }
 }
 
-// --- Main ---
+async function main() {
+  console.log("=== Railway Startup ===");
 
-console.log("=== Railway Startup ===");
+  await fixFailedMigrations();
 
-const firstTry = tryMigrateDeploy();
-
-if (!firstTry) {
-  // Re-capture output to extract names
-  const result = spawnSync(
-    "npx",
-    ["prisma", "migrate", "deploy"],
-    { stdio: ["inherit", "pipe", "pipe"], encoding: "utf8" }
-  );
-  const output = (result.stdout || "") + (result.stderr || "");
-
-  console.log("\n>> P3009 detected — resolving failed migrations...");
-  resolveFailedMigrations(output);
-
-  console.log("\n>> Retrying migration deployment...");
   run("npx prisma migrate deploy");
+  run("npx next start");
 }
 
-console.log("\n>> Starting Next.js...");
-run("npx next start");
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
