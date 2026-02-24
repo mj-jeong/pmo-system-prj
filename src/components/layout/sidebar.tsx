@@ -35,7 +35,7 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "Dashboard", labelKey: "nav.dashboard", href: "/", icon: LayoutDashboard },
+  { label: "Dashboard", labelKey: "nav.dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Projects", labelKey: "nav.projects", href: "/projects", icon: FolderKanban },
   { label: "Attendance", labelKey: "nav.attendance", href: "/workforce/attendance", icon: CalendarCheck },
   { label: "Time Off", labelKey: "nav.timeOff", href: "/workforce/time-off", icon: CalendarOff },
@@ -79,10 +79,7 @@ function Sidebar({ className, currentRole = "MEMBER", ...props }: SidebarProps) 
         {visibleItems.map((item) => {
           const Icon = item.icon;
           // Determine if this nav item is currently active
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href);
+          const isActive = pathname.startsWith(item.href);
 
           return (
             <Link

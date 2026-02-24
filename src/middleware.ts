@@ -278,6 +278,17 @@ export function middleware(request: NextRequest) {
   }
 
   // ------- Public pages: allow without auth -------
+  // For the root landing page, redirect authenticated users to /dashboard
+  if (pathname === "/") {
+    const sessionToken =
+      request.cookies.get("next-auth.session-token")?.value ??
+      request.cookies.get("__Secure-next-auth.session-token")?.value;
+    if (sessionToken) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (PUBLIC_PATHS.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }

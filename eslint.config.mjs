@@ -10,6 +10,8 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // Reference/prototype files — not part of the Next.js app
+  { ignores: ["src/ui/**"] },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
     rules: {

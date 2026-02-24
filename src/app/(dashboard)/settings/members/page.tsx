@@ -373,7 +373,7 @@ function MembershipRequestsSection() {
               <p className="text-xs text-muted-foreground">{req.email}</p>
               {req.message && (
                 <p className="text-xs text-muted-foreground mt-1 italic">
-                  "{req.message}"
+                  &ldquo;{req.message}&rdquo;
                 </p>
               )}
             </div>

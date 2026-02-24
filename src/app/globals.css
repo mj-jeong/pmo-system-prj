@@ -159,3 +159,24 @@
  *        12(48px), 16(64px), 20(80px), 24(96px)
  * Uses Tailwind default spacing scale
  * ============================================ */
+
+/* ============================================
+ * Landing Page Utility Classes
+ * ============================================ */
+@layer components {
+  .glass-card {
+    @apply bg-white border border-slate-200 shadow-sm rounded-xl;
+  }
+
+  .landing-btn-primary {
+    @apply px-5 py-2.5 bg-slate-900 text-white rounded-lg font-medium
+           hover:bg-slate-800 transition-colors inline-flex items-center
+           justify-center gap-2;
+  }
+
+  .landing-btn-secondary {
+    @apply px-5 py-2.5 bg-white border border-slate-200 text-slate-700
+           rounded-lg font-medium hover:bg-slate-50 transition-colors
+           inline-flex items-center justify-center gap-2;
+  }
+}
