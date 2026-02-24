@@ -179,4 +179,10 @@
            rounded-lg font-medium hover:bg-slate-50 transition-colors
            inline-flex items-center justify-center gap-2;
   }
+
+  .landing-root {
+    color-scheme: only light;
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+  }
 }

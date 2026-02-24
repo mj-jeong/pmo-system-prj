@@ -428,7 +428,7 @@ function Footer() {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="landing-root min-h-screen bg-white text-slate-900">
       <Navbar />
       <main>
         <Hero />
