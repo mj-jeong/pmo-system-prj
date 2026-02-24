@@ -51,6 +51,13 @@ Attendance rate: 90%.
     projectNarrative: "## Project Highlights\n\nProject Alpha is at 65%.",
     workforceNarrative: "## Workforce & Availability\n\nAttendance: 90%.",
     markdown,
+    usage: {
+      promptTokens: 100,
+      completionTokens: 200,
+      totalTokens: 300,
+      model: "gpt-4o",
+    },
+    isFallback: false,
     ...overrides,
   };
 }
@@ -282,6 +289,8 @@ describe("validateWithRetry", () => {
       projectNarrative: "",
       workforceNarrative: "",
       markdown: "too short",
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "gpt-4o" },
+      isFallback: false,
     };
     const validResult = buildValidResult();
 
@@ -304,6 +313,8 @@ describe("validateWithRetry", () => {
       projectNarrative: "",
       workforceNarrative: "",
       markdown: "no valid sections",
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "gpt-4o" },
+      isFallback: false,
     };
 
     const mockProvider: LLMProvider = {
@@ -325,6 +336,8 @@ describe("validateWithRetry", () => {
       projectNarrative: "",
       workforceNarrative: "",
       markdown: "no valid sections",
+      usage: { promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "gpt-4o" },
+      isFallback: false,
     };
 
     const mockProvider: LLMProvider = {

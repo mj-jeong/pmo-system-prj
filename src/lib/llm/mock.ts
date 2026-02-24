@@ -175,5 +175,12 @@ ${workforceNarrative}
     projectNarrative,
     workforceNarrative,
     markdown,
+    usage: {
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "mock",
+    },
+    isFallback: false,
   };
 }

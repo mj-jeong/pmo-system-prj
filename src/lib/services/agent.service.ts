@@ -84,6 +84,8 @@ export interface ReportListItem {
   projectIds: string[];
   detailLevel: DetailLevel;
   status: ReportStatus;
+  isFallback: boolean;
+  fallbackReason: string | null;
   createdAt: string;
   publishedAt: string | null;
   createdBy: {

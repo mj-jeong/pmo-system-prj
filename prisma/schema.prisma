@@ -53,6 +53,7 @@ model Organization {
   invitationTokens   InvitationToken[]
   statusHistories    ProjectStatusHistory[]
   auditLogs          AuditLog[]
+  llmUsages          LlmUsage[]
 
   @@map("organizations")
 }
@@ -347,6 +348,7 @@ model AgentRun {
   createdBy    User         @relation(fields: [createdById], references: [id])
   report       Report?      @relation(fields: [reportId], references: [id])
   steps        AgentStep[]
+  llmUsages    LlmUsage[]
 
   // Indexes
   @@index([organizationId])
@@ -527,6 +529,8 @@ model Report {
   structuredData    Json?
   reasoningTrace    Json?        // { inputSummary, appliedRules: RuleResult[], riskScore }
   comparisonData    Json?        // { previousReportId, previousPeriod, deltas: {...} }
+  isFallback        Boolean      @default(false)  // LLM 실패 시 템플릿 기반 생성 여부
+  fallbackReason    String?      // Fallback 사유 (LLM 오류 메시지)
   createdById       String
   publishedAt       DateTime?
   publishedById     String?
@@ -544,4 +548,30 @@ model Report {
   @@index([status])
   @@index([createdById])
   @@map("reports")
+}
+
+// =============================================================================
+// LlmUsage - Tracks LLM API token usage and cost per agent run
+// Provides visibility into AI cost and usage patterns
+// =============================================================================
+
+model LlmUsage {
+  id               String   @id @default(cuid())
+  organizationId   String
+  agentRunId       String
+  model            String   // "gpt-4o-mini"
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  estimatedCostUsd Float?   // 계산된 추정 비용 (USD)
+  createdAt        DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id])
+  agentRun     AgentRun     @relation(fields: [agentRunId], references: [id])
+
+  // Indexes
+  @@index([organizationId, createdAt])
+  @@index([agentRunId])
+  @@map("llm_usages")
 }

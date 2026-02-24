@@ -191,7 +191,7 @@ export async function executeRun(
   let reportId: string | null = null;
   let collectedData: CollectedData | null = null;
   let analysisResult: AnalysisResult | null = null;
-  let narrativeResult: { executiveSummary: string; projectNarrative: string; workforceNarrative: string; markdown: string } | null = null;
+  let narrativeResult: import("@/lib/llm/provider").NarrativeResult | null = null;
   let reasoningTrace: Record<string, unknown> | null = null;
   let comparisonData: ComparisonData | null = null;
 
@@ -387,11 +387,26 @@ export async function executeRun(
 
             narrativeResult = await generateNarrative(reportContext);
 
+            // Persist LLM usage record for every run (including mock/fallback with 0 tokens)
+            // This ensures full observability of all agent runs regardless of LLM mode.
+            await prisma.llmUsage.create({
+              data: {
+                organizationId,
+                agentRunId: agentRun.id,
+                model: narrativeResult.usage.model,
+                promptTokens: narrativeResult.usage.promptTokens,
+                completionTokens: narrativeResult.usage.completionTokens,
+                totalTokens: narrativeResult.usage.totalTokens,
+                estimatedCostUsd: calculateCostUsd(narrativeResult.usage),
+              },
+            });
+
             await completeStep(summarizeStep.id, {
               executiveSummaryLength: narrativeResult.executiveSummary.length,
               projectNarrativeLength: narrativeResult.projectNarrative.length,
               workforceNarrativeLength: narrativeResult.workforceNarrative.length,
               markdownLength: narrativeResult.markdown.length,
+              isFallback: narrativeResult.isFallback,
             });
 
             // -------------------------------------------------------------
@@ -419,6 +434,9 @@ export async function executeRun(
                   // Phase 2: reasoning trace + comparison data
                   reasoningTrace: reasoningTrace ? JSON.parse(JSON.stringify(reasoningTrace)) : undefined,
                   comparisonData: comparisonData ? JSON.parse(JSON.stringify(comparisonData)) : undefined,
+                  // Phase 4: fallback tracking
+                  isFallback: narrativeResult.isFallback ?? false,
+                  fallbackReason: narrativeResult.fallbackReason ?? null,
                   createdById: userId,
                 },
               });
@@ -557,4 +575,28 @@ function buildFailedResult(runId: string, error: unknown): ExecuteRunResult {
     status: "FAILED",
     errorMessage: error instanceof Error ? error.message : "Unknown error",
   };
+}
+
+// ---------------------------------------------------------------------------
+// Cost Estimation
+// ---------------------------------------------------------------------------
+
+/**
+ * Estimate the USD cost of an LLM usage record.
+ * Pricing based on gpt-4o-mini rates:
+ *   Input:  $0.150 per 1M tokens
+ *   Output: $0.600 per 1M tokens
+ *
+ * Returns 0 for mock and fallback models.
+ * Result is rounded to 6 decimal places.
+ */
+function calculateCostUsd(usage: {
+  promptTokens: number;
+  completionTokens: number;
+  model: string;
+}): number {
+  if (usage.model === "mock" || usage.model === "fallback") return 0;
+  const inputCost = (usage.promptTokens / 1_000_000) * 0.15;
+  const outputCost = (usage.completionTokens / 1_000_000) * 0.60;
+  return Math.round((inputCost + outputCost) * 1_000_000) / 1_000_000;
 }

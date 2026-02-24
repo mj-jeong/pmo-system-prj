@@ -14,20 +14,16 @@ import "server-only";
 // Legacy: OPENAI_BILLING_ENABLED is still supported for backward compatibility.
 
 import type { ReportContext } from "./prompts";
-import type { LLMMode } from "@/lib/llm/provider";
+import type { LLMMode, NarrativeResult } from "@/lib/llm/provider";
 import { selectProvider } from "@/lib/llm/selectProvider";
 import { validateWithRetry } from "@/lib/llm/validator";
+import { generateFallbackNarrative } from "./fallback-narrative";
 
 // ---------------------------------------------------------------------------
 // Types (re-exported for backward compatibility)
 // ---------------------------------------------------------------------------
 
-export interface NarrativeResult {
-  executiveSummary: string;
-  projectNarrative: string;
-  workforceNarrative: string;
-  markdown: string;
-}
+export type { NarrativeResult } from "@/lib/llm/provider";
 
 export interface OpenAIError {
   code: string;
@@ -46,6 +42,10 @@ export interface OpenAIError {
  * Internally delegates to the appropriate LLM provider based on environment
  * configuration and validates the output.
  *
+ * If the LLM provider fails (API error, validation failure, or any other error),
+ * the function automatically falls back to the template-based fallback narrative
+ * generator. The fallback is flagged with isFallback=true and the error reason.
+ *
  * Provider selection:
  * 1. CI=true -> MockLLMProvider (always, zero cost)
  * 2. LLM_MODE=mock -> MockLLMProvider
@@ -61,12 +61,18 @@ export interface OpenAIError {
  *
  * @param reportContext - Sanitized report context with project data
  * @param llmMode - Optional runtime mode override (development only)
- * @returns NarrativeResult with executive summary, project narrative, workforce narrative, and full markdown
+ * @returns NarrativeResult with usage info and isFallback flag
  */
 export async function generateNarrative(
   reportContext: ReportContext,
   llmMode?: LLMMode
 ): Promise<NarrativeResult> {
-  const provider = selectProvider(llmMode);
-  return validateWithRetry(provider, reportContext, 1);
+  try {
+    const provider = selectProvider(llmMode);
+    return await validateWithRetry(provider, reportContext, 1);
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "Unknown LLM error";
+    console.error("[LLM] generateNarrative failed, using fallback:", reason);
+    return generateFallbackNarrative(reportContext, reason);
+  }
 }

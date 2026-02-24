@@ -163,7 +163,13 @@ export class OpenAILLMProvider implements LLMProvider {
           throw new Error("OpenAI returned empty response content");
         }
 
-        const parsed = JSON.parse(content) as NarrativeResult;
+        // Parse core narrative fields from LLM JSON response
+        const parsed = JSON.parse(content) as {
+          executiveSummary?: string;
+          projectNarrative?: string;
+          workforceNarrative?: string;
+          markdown?: string;
+        };
 
         // Validate required fields
         if (
@@ -175,7 +181,19 @@ export class OpenAILLMProvider implements LLMProvider {
           throw new Error("OpenAI response missing required narrative fields");
         }
 
-        return parsed;
+        return {
+          executiveSummary: parsed.executiveSummary,
+          projectNarrative: parsed.projectNarrative,
+          workforceNarrative: parsed.workforceNarrative,
+          markdown: parsed.markdown,
+          usage: {
+            promptTokens: response.usage?.prompt_tokens ?? 0,
+            completionTokens: response.usage?.completion_tokens ?? 0,
+            totalTokens: response.usage?.total_tokens ?? 0,
+            model: this.model,
+          },
+          isFallback: false,
+        };
       } catch (error) {
         lastError = error;
 

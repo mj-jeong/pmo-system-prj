@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, FileText, ExternalLink } from "lucide-react";
+import { Plus, FileText, ExternalLink, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 
 import { PageContainer } from "@/components/layout/page-container";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RoleGuard } from "@/components/auth/role-guard";
@@ -58,11 +59,22 @@ export default function ReportsPage() {
       cell: (row) => {
         const variant = row.status === "PUBLISHED" ? "success" : "warning";
         return (
-          <StatusBadge
-            status={row.status}
-            variant={variant}
-            label={row.status === "PUBLISHED" ? "Published" : "Draft"}
-          />
+          <div className="flex items-center gap-2 flex-wrap">
+            <StatusBadge
+              status={row.status}
+              variant={variant}
+              label={row.status === "PUBLISHED" ? "Published" : "Draft"}
+            />
+            {row.isFallback && (
+              <Badge
+                variant="outline"
+                className="border-amber-400 text-amber-700 dark:text-amber-400 gap-1"
+              >
+                <AlertTriangle className="h-3 w-3" />
+                Template-based
+              </Badge>
+            )}
+          </div>
         );
       },
     },
