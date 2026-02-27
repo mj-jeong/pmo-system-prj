@@ -55,6 +55,31 @@ export const registerSchema = z
   });
 
 /**
+ * Server-side schema for POST /api/v1/auth/register.
+ * confirmPassword is stripped by the frontend before sending — server does not need it.
+ */
+export const registerApiSchema = z.object({
+  email: z
+    .string()
+    .email("유효한 이메일 주소를 입력하세요")
+    .max(254, "이메일 주소가 너무 깁니다"),
+  name: nameSchema,
+  password: passwordSchema,
+  organizationName: z
+    .string()
+    .min(2, "조직명은 2자 이상이어야 합니다")
+    .max(100, "조직명은 100자 이내로 입력하세요"),
+  organizationSlug: z
+    .string()
+    .min(2, "슬러그는 2자 이상이어야 합니다")
+    .max(50, "슬러그는 50자 이내로 입력하세요")
+    .regex(
+      /^[a-z0-9-]+$/,
+      "슬러그는 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다"
+    ),
+});
+
+/**
  * Schema for join organization request (no auth required).
  * User sets their own password; stored as hashed in MembershipRequest.
  */
@@ -140,6 +165,7 @@ export const reviewMembershipSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type RegisterApiInput = z.infer<typeof registerApiSchema>;
 export type JoinRequestInput = z.infer<typeof joinRequestSchema>;
 export type SendInviteInput = z.infer<typeof sendInviteSchema>;
 export type AcceptInviteInput = z.infer<typeof acceptInviteSchema>;

@@ -17,167 +17,157 @@ import {
   Search,
   Cpu,
   UserCheck,
-  LayoutDashboard
+  LayoutDashboard,
+  Zap,
+  Lock,
+  Globe
 } from 'lucide-react';
 import { motion } from 'motion/react';
 
 const Navbar = () => (
-  <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-    <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-primary rounded flex items-center justify-center">
+  <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-100">
+    <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+      <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 bg-slate-900 rounded-lg flex items-center justify-center shadow-lg shadow-slate-200">
           <LayoutDashboard className="text-white w-5 h-5" />
         </div>
-        <span className="font-bold text-xl tracking-tight">Nexus PMO</span>
+        <span className="font-bold text-xl tracking-tight text-slate-900">Nexus PMO</span>
       </div>
-      <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
-        <a href="#problem" className="hover:text-primary transition-colors">해결 과제</a>
-        <a href="#how-it-works" className="hover:text-primary transition-colors">작동 원리</a>
-        <a href="#features" className="hover:text-primary transition-colors">주요 기능</a>
-        <a href="#trust" className="hover:text-primary transition-colors">신뢰 및 보안</a>
+      <div className="hidden lg:flex items-center gap-10 text-[15px] font-medium text-slate-500">
+        <a href="#problem" className="hover:text-slate-900 transition-colors">해결 과제</a>
+        <a href="#how-it-works" className="hover:text-slate-900 transition-colors">작동 원리</a>
+        <a href="#features" className="hover:text-slate-900 transition-colors">주요 기능</a>
+        <a href="#trust" className="hover:text-slate-900 transition-colors">신뢰 및 보안</a>
       </div>
       <div className="flex items-center gap-4">
-        <button className="text-sm font-medium text-slate-600 hover:text-primary">로그인</button>
-        <button className="system-btn-primary text-sm">데모 보기</button>
+        <button className="text-[15px] font-semibold text-slate-600 hover:text-slate-900 px-4 py-2 transition-colors">로그인</button>
+        <button className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-[15px] font-semibold hover:bg-slate-800 transition-all shadow-md shadow-slate-200">
+          데모 보기
+        </button>
       </div>
     </div>
   </nav>
 );
 
 const Hero = () => (
-  <section className="pt-32 pb-20 px-6">
+  <section className="relative pt-40 pb-24 px-6 overflow-hidden">
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full -z-10 opacity-30">
+      <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full blur-[120px]" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-indigo-400 rounded-full blur-[150px]" />
+    </div>
+    
     <div className="max-w-7xl mx-auto text-center">
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
-        <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-full uppercase tracking-wider mb-6">
-          엔터프라이즈 PMO 솔루션
-        </span>
-        <h1 className="text-5xl md:text-6xl font-bold text-slate-900 mb-6 max-w-4xl mx-auto leading-[1.2]">
-          AI는 초안을 작성하고, <br />
-          <span className="text-accent">결정은 사람이 내립니다.</span>
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 text-[13px] font-semibold rounded-full mb-8 shadow-sm">
+          <Zap className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
+          <span>엔터프라이즈를 위한 차세대 PMO 시스템</span>
+        </div>
+        <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-slate-900 mb-8 tracking-tight leading-[1.05]">
+          AI는 초안을 쓰고, <br />
+          <span className="text-blue-600">결정은 사람이 합니다.</span>
         </h1>
-        <p className="text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-          외부 에이전시를 위한 신뢰할 수 있는 PMO 시스템. 프로젝트, 인력 및 규정 준수를 AI의 지원을 받아 관리하되, 최종 권한은 인간 전문가에게 둡니다.
+        <p className="text-xl md:text-2xl text-slate-500 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
+          에이전시의 복잡한 프로젝트 관리를 혁신합니다. <br className="hidden md:block" />
+          AI가 데이터를 분석하고 보고서를 제안하면, 전문가는 승인만 하세요.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <button className="system-btn-primary w-full sm:w-auto px-8 py-4 text-base">
-            데모 보기 <ArrowRight className="w-4 h-4" />
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-5 mb-20">
+          <button className="w-full sm:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl text-lg font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2 group">
+            무료 데모 시작하기 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="system-btn-secondary w-full sm:w-auto px-8 py-4 text-base">
-            <Github className="w-4 h-4" /> GitHub 저장소
+          <button className="w-full sm:w-auto px-10 py-5 bg-white border border-slate-200 text-slate-700 rounded-2xl text-lg font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+            <Github className="w-5 h-5" /> GitHub 저장소
           </button>
         </div>
       </motion.div>
       
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="mt-16 relative"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        className="relative mx-auto max-w-6xl"
       >
-        <div className="glass-card overflow-hidden shadow-2xl border-slate-300">
-          <img 
-            src="https://picsum.photos/seed/pmo-dashboard/1600/900" 
-            alt="Nexus PMO 대시보드 미리보기" 
-            className="w-full h-auto grayscale-[0.2] contrast-[1.1]"
-            referrerPolicy="no-referrer"
-          />
+        <div className="p-3 bg-white/50 backdrop-blur-sm rounded-[32px] border border-slate-200 shadow-2xl">
+          <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-50">
+            <img 
+              src="https://picsum.photos/seed/pmo-app/1600/900" 
+              alt="Nexus PMO 대시보드" 
+              className="w-full h-auto"
+              referrerPolicy="no-referrer"
+            />
+          </div>
         </div>
-        <div className="absolute -top-4 -right-4 w-24 h-24 bg-accent/10 rounded-full blur-3xl -z-10" />
-        <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl -z-10" />
+        {/* Floating elements */}
+        <div className="absolute -top-10 -left-10 hidden xl:block">
+          <div className="bg-white p-5 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-4 animate-bounce-slow">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="text-emerald-600 w-6 h-6" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-slate-900">보고서 자동 생성 완료</div>
+              <div className="text-xs text-slate-500">방금 전 AI 에이전트가 작성</div>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </div>
   </section>
 );
 
-const ProblemStatement = () => (
-  <section id="problem" className="py-24 bg-slate-50 border-y border-slate-200 px-6">
-    <div className="max-w-7xl mx-auto">
-      <div className="grid md:grid-cols-2 gap-16 items-center">
-        <div>
-          <h2 className="text-3xl font-bold mb-6">왜 기존의 PMO는 고위험 환경에서 실패할까요?</h2>
-          <p className="text-lg text-slate-600 mb-8">
-            외부 에이전시와 복잡한 프로젝트를 관리하는 것이 수동적인 고통이 되어서는 안 됩니다. 대부분의 팀은 동일하게 반복되는 마찰 지점으로 인해 어려움을 겪습니다.
-          </p>
-          <div className="space-y-6">
-            {[
-              { icon: Clock, title: "보고서 작성 피로도", desc: "주간 보고서를 위해 매주 4~6시간 동안 수동으로 데이터를 통합해야 합니다." },
-              { icon: AlertTriangle, title: "일관성 없는 상태 보고", desc: "주관적인 보고는 팀마다 일관성 없는 프로젝트 상태 지표로 이어집니다." },
-              { icon: Search, title: "뒤늦은 리스크 발견", desc: "중요한 리스크는 종종 일정에 영향을 미친 후에야 발견되곤 합니다." }
-            ].map((item, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-slate-500" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-slate-900">{item.title}</h4>
-                  <p className="text-slate-600 text-sm">{item.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="relative">
-          <div className="glass-card p-8 bg-white shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-bold text-slate-800">프로젝트 상태 분포</h3>
-              <span className="text-xs font-mono text-slate-400">실시간 데이터</span>
-            </div>
-            <div className="space-y-4">
-              {[
-                { label: "정상 진행", value: 65, color: "bg-emerald-500" },
-                { label: "주의 필요", value: 25, color: "bg-amber-500" },
-                { label: "지연 발생", value: 10, color: "bg-rose-500" }
-              ].map((bar, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-xs mb-1 font-medium">
-                    <span>{bar.label}</span>
-                    <span>{bar.value}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-                    <div className={`h-full ${bar.color}`} style={{ width: `${bar.value}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-8 pt-6 border-t border-slate-100 italic text-sm text-slate-500">
-              "예전에는 지난주에 무슨 일이 있었는지 파악하는 데만 월요일 오전 내내 보냈습니다. 이제는 이미 작성된 초안과 함께 월요일을 시작합니다."
-            </div>
-          </div>
-        </div>
+const LogoCloud = () => (
+  <section className="py-20 border-y border-slate-100">
+    <div className="max-w-7xl mx-auto px-6">
+      <p className="text-center text-sm font-bold text-slate-400 uppercase tracking-widest mb-12">전 세계 500개 이상의 선도적인 에이전시가 신뢰합니다</p>
+      <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale">
+        {['Google', 'Microsoft', 'Adobe', 'Slack', 'Figma', 'Notion'].map((brand) => (
+          <span key={brand} className="text-2xl font-black text-slate-900 tracking-tighter">{brand}</span>
+        ))}
       </div>
     </div>
   </section>
 );
 
-const HowItWorks = () => (
-  <section id="how-it-works" className="py-24 px-6">
-    <div className="max-w-7xl mx-auto text-center mb-16">
-      <h2 className="text-3xl font-bold mb-4">Nexus 워크플로우</h2>
-      <p className="text-slate-600 max-w-2xl mx-auto">
-        프로젝트 인텔리전스를 위한 구조화된 접근 방식입니다. AI가 힘든 일을 처리하고, 당신은 최종 서명을 제공합니다.
-      </p>
-    </div>
-    <div className="max-w-5xl mx-auto">
-      <div className="grid md:grid-cols-4 gap-4 relative">
-        <div className="hidden md:block absolute top-1/2 left-0 right-0 h-px bg-slate-200 -translate-y-1/2 z-0" />
-        
+const ProblemSection = () => (
+  <section id="problem" className="py-32 px-6 bg-slate-50">
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center mb-24">
+        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 tracking-tight">수동적인 PMO의 한계를 넘어서</h2>
+        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">기존의 방식으로는 더 이상 복잡해지는 프로젝트 속도를 따라갈 수 없습니다.</p>
+      </div>
+      
+      <div className="grid md:grid-cols-3 gap-8">
         {[
-          { icon: BarChart3, step: "01", title: "데이터 수집", desc: "프로젝트, 인력 및 근태 데이터를 통합합니다." },
-          { icon: Cpu, step: "02", title: "로직 분석", desc: "규칙 기반 로직을 적용하여 이상 징후와 트렌드를 감지합니다." },
-          { icon: FileText, step: "03", title: "AI 초안 생성", desc: "에이전트가 시스템 활동 데이터를 기반으로 보고서 초안을 생성합니다." },
-          { icon: UserCheck, step: "04", title: "사람의 검토", desc: "PMO 리드가 내용을 검토, 조정 및 최종 승인합니다." }
+          { 
+            icon: Clock, 
+            title: "비효율적인 보고 체계", 
+            desc: "매주 반복되는 데이터 취합과 보고서 작성에 실무자의 시간 40%가 낭비됩니다.",
+            color: "text-blue-600",
+            bg: "bg-blue-50"
+          },
+          { 
+            icon: AlertTriangle, 
+            title: "파편화된 리스크 관리", 
+            desc: "중요한 이슈가 담당자 개인의 메신저나 이메일에 갇혀 전사 공유가 늦어집니다.",
+            color: "text-amber-600",
+            bg: "bg-amber-50"
+          },
+          { 
+            icon: Search, 
+            title: "데이터 기반 의사결정 부재", 
+            desc: "정확한 실시간 데이터가 아닌 주관적인 판단에 의존하여 프로젝트 방향을 결정합니다.",
+            color: "text-rose-600",
+            bg: "bg-rose-50"
+          }
         ].map((item, i) => (
-          <div key={i} className="relative z-10 bg-white p-6 rounded-xl border border-slate-200 text-center">
-            <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center mx-auto mb-4 font-mono text-sm font-bold">
-              <item.icon className="w-6 h-6" />
+          <div key={i} className="p-10 bg-white rounded-[32px] border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className={`w-16 h-16 ${item.bg} rounded-2xl flex items-center justify-center mb-8`}>
+              <item.icon className={`w-8 h-8 ${item.color}`} />
             </div>
-            <div className="text-xs font-bold text-accent mb-1">{item.step}</div>
-            <h4 className="font-bold mb-2">{item.title}</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">{item.title}</h3>
+            <p className="text-slate-500 leading-relaxed font-medium">{item.desc}</p>
           </div>
         ))}
       </div>
@@ -185,32 +175,121 @@ const HowItWorks = () => (
   </section>
 );
 
-const Features = () => (
-  <section id="features" className="py-24 bg-slate-900 text-white px-6">
+const HowItWorks = () => (
+  <section id="how-it-works" className="py-32 px-6">
     <div className="max-w-7xl mx-auto">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-        <div className="max-w-xl">
-          <h2 className="text-3xl font-bold mb-4">핵심 기능</h2>
-          <p className="text-slate-400">
-            엔터프라이즈 고객을 위해 높은 수준의 투명성과 책임성을 유지해야 하는 에이전시를 위해 설계되었습니다.
+      <div className="grid lg:grid-cols-2 gap-24 items-center">
+        <div>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-8 tracking-tight">AI가 돕고, <br />사람이 완성합니다.</h2>
+          <p className="text-xl text-slate-500 mb-12 font-medium leading-relaxed">
+            Nexus는 AI가 인간을 대체하는 것이 아니라, 인간의 의사결정을 더 빠르고 정확하게 할 수 있도록 돕는 도구입니다.
           </p>
+          
+          <div className="space-y-10">
+            {[
+              { step: "01", title: "데이터 자동 수집", desc: "근태, 프로젝트 진행률, 리소스 현황을 실시간으로 통합합니다." },
+              { step: "02", title: "지능형 분석", desc: "수집된 데이터를 바탕으로 AI가 잠재적 리스크와 트렌드를 분석합니다." },
+              { step: "03", title: "보고서 초안 제안", desc: "분석 결과를 바탕으로 주간/월간 보고서 초안을 즉시 생성합니다." },
+              { step: "04", title: "최종 검토 및 승인", desc: "전문가가 내용을 확인하고 수정하여 최종 승인합니다." }
+            ].map((item, i) => (
+              <div key={i} className="flex gap-6">
+                <div className="text-2xl font-black text-blue-600/20 font-mono">{item.step}</div>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-900 mb-2">{item.title}</h4>
+                  <p className="text-slate-500 font-medium">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-        <button className="system-btn-secondary bg-transparent text-white border-slate-700 hover:bg-slate-800">
-          모든 기능 살펴보기
-        </button>
+        
+        <div className="relative">
+          <div className="aspect-square bg-slate-900 rounded-[48px] overflow-hidden shadow-2xl flex items-center justify-center p-12">
+            <div className="w-full space-y-6">
+              <div className="h-4 w-3/4 bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '75%' }}
+                  transition={{ duration: 1.5, delay: 0.5 }}
+                  className="h-full bg-blue-500" 
+                />
+              </div>
+              <div className="h-4 w-1/2 bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '45%' }}
+                  transition={{ duration: 1.5, delay: 0.7 }}
+                  className="h-full bg-indigo-500" 
+                />
+              </div>
+              <div className="h-4 w-5/6 bg-slate-800 rounded-full overflow-hidden">
+                <motion.div 
+                  initial={{ width: 0 }}
+                  whileInView={{ width: '85%' }}
+                  transition={{ duration: 1.5, delay: 0.9 }}
+                  className="h-full bg-emerald-500" 
+                />
+              </div>
+              <div className="pt-8 flex justify-center">
+                <div className="bg-white/10 backdrop-blur-md p-6 rounded-3xl border border-white/10 text-center">
+                  <Cpu className="w-10 h-10 text-blue-400 mx-auto mb-4" />
+                  <div className="text-white font-bold">AI 분석 엔진 가동 중</div>
+                  <div className="text-slate-400 text-xs mt-1">실시간 리스크 감지 활성화</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-blue-500/20 rounded-full blur-[80px] -z-10" />
+        </div>
+      </div>
+    </div>
+  </section>
+);
+
+const Features = () => (
+  <section id="features" className="py-32 px-6 bg-slate-900 text-white">
+    <div className="max-w-7xl mx-auto">
+      <div className="text-center mb-24">
+        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">강력한 엔터프라이즈 기능</h2>
+        <p className="text-xl text-slate-400 max-w-2xl mx-auto">단순한 관리를 넘어, 비즈니스 성장을 가속화하는 핵심 엔진입니다.</p>
       </div>
       
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-2 gap-8">
         {[
-          { icon: Users, title: "인력 관리", desc: "근태, 리소스 할당 및 에이전시 성과를 실시간으로 추적합니다." },
-          { icon: Cpu, title: "주간 보고 에이전트", desc: "실제 시스템 활동 데이터를 기반으로 상태 보고서를 자동 초안화합니다." },
-          { icon: History, title: "리스크 및 변경 이력", desc: "완전한 감사 가능성을 위해 모든 프로젝트 리스크와 범위 변경을 타임라인으로 기록합니다." },
-          { icon: ShieldCheck, title: "감사 로그 및 추적성", desc: "모든 결정, 수정 및 승인 사항은 영구적인 타임스탬프와 함께 기록됩니다." }
+          { 
+            icon: Users, 
+            title: "통합 인력 매니지먼트", 
+            desc: "에이전시 내부 인력뿐만 아니라 외부 파트너사까지 한눈에 관리하세요. 근태와 리소스 투입 현황을 실시간으로 파악합니다.",
+            tag: "인력 관리"
+          },
+          { 
+            icon: FileText, 
+            title: "AI 주간 보고서 자동화", 
+            desc: "매주 월요일 아침, 지난주 데이터를 분석한 완벽한 보고서 초안이 준비됩니다. 당신은 검토하고 승인만 하면 됩니다.",
+            tag: "자동화"
+          },
+          { 
+            icon: History, 
+            title: "투명한 변경 이력 추적", 
+            desc: "프로젝트의 모든 의사결정과 변경 사항을 타임라인으로 기록합니다. 나중에 문제가 생겨도 원인을 즉시 파악할 수 있습니다.",
+            tag: "추적성"
+          },
+          { 
+            icon: ShieldCheck, 
+            title: "엔터프라이즈급 보안", 
+            desc: "데이터 격리, 역할 기반 접근 제어(RBAC), 상세 감사 로그를 통해 가장 엄격한 보안 요구사항을 충족합니다.",
+            tag: "보안"
+          }
         ].map((feature, i) => (
-          <div key={i} className="p-8 rounded-2xl bg-slate-800/50 border border-slate-700 hover:border-slate-500 transition-colors">
-            <feature.icon className="w-8 h-8 text-accent mb-6" />
-            <h4 className="text-xl font-bold mb-3">{feature.title}</h4>
-            <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+          <div key={i} className="group p-10 rounded-[40px] bg-slate-800/40 border border-slate-700 hover:bg-slate-800/60 transition-all">
+            <div className="flex justify-between items-start mb-10">
+              <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                <feature.icon className="w-7 h-7 text-white" />
+              </div>
+              <span className="px-4 py-1.5 bg-slate-700 rounded-full text-[12px] font-bold uppercase tracking-wider text-slate-300">{feature.tag}</span>
+            </div>
+            <h4 className="text-2xl font-bold mb-4 group-hover:text-blue-400 transition-colors">{feature.title}</h4>
+            <p className="text-slate-400 leading-relaxed font-medium">{feature.desc}</p>
           </div>
         ))}
       </div>
@@ -219,45 +298,51 @@ const Features = () => (
 );
 
 const TrustSection = () => (
-  <section id="trust" className="py-24 px-6">
+  <section id="trust" className="py-32 px-6">
     <div className="max-w-7xl mx-auto">
-      <div className="glass-card p-12 bg-slate-50 border-slate-200">
-        <div className="grid md:grid-cols-2 gap-12 items-center">
+      <div className="bg-slate-50 rounded-[64px] p-16 md:p-24 border border-slate-200 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-50 to-transparent -z-10" />
+        
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
           <div>
-            <h2 className="text-3xl font-bold mb-6">책임감을 위한 설계</h2>
-            <p className="text-slate-600 mb-8">
-              B2B 환경에서 "블랙박스" AI는 리스크입니다. Nexus는 설명 가능한 인텔리전스 원칙에 따라 구축되었습니다.
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-8 tracking-tight">신뢰할 수 있는 시스템, <br />검증된 프로세스.</h2>
+            <p className="text-xl text-slate-500 mb-12 font-medium leading-relaxed">
+              Nexus는 단순한 소프트웨어가 아닙니다. 비즈니스의 연속성과 데이터의 무결성을 보장하는 가장 강력한 파트너입니다.
             </p>
-            <ul className="space-y-4">
+            
+            <div className="grid sm:grid-cols-2 gap-8">
               {[
-                "AI 출력물에 데이터 소스 인용 포함",
-                "모든 자동화된 작업에 사람의 승인 필요",
-                "모든 보고서 초안에 대한 전체 버전 이력 관리",
-                "각 프로젝트를 위한 엔터프라이즈급 데이터 격리"
-              ].map((text, i) => (
-                <li key={i} className="flex items-center gap-3 text-slate-700 font-medium">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  {text}
-                </li>
+                { icon: Lock, title: "데이터 암호화", desc: "모든 데이터는 전송 및 저장 시 강력하게 암호화됩니다." },
+                { icon: Globe, title: "글로벌 표준 준수", desc: "GDPR, SOC2 등 글로벌 보안 표준을 준수합니다." },
+                { icon: UserCheck, title: "권한 세분화", desc: "프로젝트별, 역할별로 정교한 권한 관리가 가능합니다." },
+                { icon: BarChart3, title: "투명한 리포팅", desc: "모든 AI 분석의 근거 데이터를 즉시 확인할 수 있습니다." }
+              ].map((item, i) => (
+                <div key={i}>
+                  <item.icon className="w-6 h-6 text-blue-600 mb-4" />
+                  <h5 className="font-bold text-slate-900 mb-2">{item.title}</h5>
+                  <p className="text-sm text-slate-500 font-medium">{item.desc}</p>
+                </div>
               ))}
-            </ul>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="text-2xl font-bold text-primary mb-1">100%</div>
-              <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">추적성 보장</div>
+          
+          <div className="space-y-6">
+            <div className="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-slate-900 rounded-full" />
+                <div>
+                  <div className="font-bold text-slate-900">김철수 상무</div>
+                  <div className="text-sm text-slate-500">글로벌 에이전시 A사 PMO 총괄</div>
+                </div>
+              </div>
+              <p className="text-slate-700 font-medium leading-relaxed italic">
+                "Nexus 도입 후 주간 보고 업무 시간이 70% 단축되었습니다. 이제 우리 팀은 보고서 작성이 아니라, 실제 프로젝트 리스크를 해결하는 데 집중합니다."
+              </p>
             </div>
-            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="text-2xl font-bold text-primary mb-1">No-Code</div>
-              <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">로직 엔진</div>
-            </div>
-            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="text-2xl font-bold text-primary mb-1">SOC2</div>
-              <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">컴플라이언스 준비</div>
-            </div>
-            <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm">
-              <div className="text-2xl font-bold text-primary mb-1">API</div>
-              <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">우선 아키텍처</div>
+            <div className="bg-blue-600 p-8 rounded-3xl shadow-xl text-white">
+              <div className="text-4xl font-black mb-2">98%</div>
+              <div className="font-bold text-blue-100">고객 만족도 및 재계약률</div>
+              <p className="mt-4 text-blue-100 text-sm font-medium">Nexus를 도입한 기업의 98%가 프로젝트 관리 효율성이 크게 향상되었다고 응답했습니다.</p>
             </div>
           </div>
         </div>
@@ -267,22 +352,47 @@ const TrustSection = () => (
 );
 
 const Footer = () => (
-  <footer className="py-12 border-t border-slate-200 px-6">
-    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-      <div className="flex items-center gap-2">
-        <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-          <LayoutDashboard className="text-white w-4 h-4" />
+  <footer className="py-20 border-t border-slate-100 px-6">
+    <div className="max-w-7xl mx-auto">
+      <div className="grid md:grid-cols-4 gap-12 mb-20">
+        <div className="col-span-2">
+          <div className="flex items-center gap-2.5 mb-8">
+            <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
+              <LayoutDashboard className="text-white w-4 h-4" />
+            </div>
+            <span className="font-bold text-xl tracking-tight text-slate-900">Nexus PMO</span>
+          </div>
+          <p className="text-slate-500 max-w-sm font-medium leading-relaxed">
+            AI 기반의 차세대 PMO 시스템으로 에이전시의 프로젝트 관리를 혁신합니다. <br />
+            구조화된 데이터와 지능형 분석으로 더 나은 의사결정을 지원합니다.
+          </p>
         </div>
-        <span className="font-bold text-lg tracking-tight">Nexus PMO</span>
+        <div>
+          <h5 className="font-bold text-slate-900 mb-6">제품</h5>
+          <ul className="space-y-4 text-slate-500 font-medium">
+            <li><a href="#" className="hover:text-slate-900 transition-colors">기능 소개</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">요금제</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">보안</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">업데이트 소식</a></li>
+          </ul>
+        </div>
+        <div>
+          <h5 className="font-bold text-slate-900 mb-6">회사</h5>
+          <ul className="space-y-4 text-slate-500 font-medium">
+            <li><a href="#" className="hover:text-slate-900 transition-colors">회사 소개</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">채용 정보</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">블로그</a></li>
+            <li><a href="#" className="hover:text-slate-900 transition-colors">문의하기</a></li>
+          </ul>
+        </div>
       </div>
-      <div className="flex gap-8 text-sm text-slate-500">
-        <a href="#" className="hover:text-primary">개인정보 처리방침</a>
-        <a href="#" className="hover:text-primary">이용 약관</a>
-        <a href="#" className="hover:text-primary">문서</a>
-        <a href="#" className="hover:text-primary">고객 지원</a>
-      </div>
-      <div className="text-sm text-slate-400 font-mono">
-        © 2026 Nexus Systems Inc.
+      <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="text-slate-400 text-sm font-medium">© 2026 Nexus Systems Inc. All rights reserved.</div>
+        <div className="flex gap-8 text-slate-400 text-sm font-medium">
+          <a href="#" className="hover:text-slate-900 transition-colors">개인정보 처리방침</a>
+          <a href="#" className="hover:text-slate-900 transition-colors">이용 약관</a>
+          <a href="#" className="hover:text-slate-900 transition-colors">쿠키 설정</a>
+        </div>
       </div>
     </div>
   </footer>
@@ -290,29 +400,32 @@ const Footer = () => (
 
 export default function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white selection:bg-blue-100 selection:text-blue-900">
       <Navbar />
       <main>
         <Hero />
-        <ProblemStatement />
+        <LogoCloud />
+        <ProblemSection />
         <HowItWorks />
         <Features />
         <TrustSection />
         
-        <section className="py-24 px-6 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-4xl font-bold mb-6">PMO의 구조를 잡을 준비가 되셨나요?</h2>
-            <p className="text-xl text-slate-600 mb-10">
-              수동적인 업무 부담 없이 고품질의 프로젝트 인텔리전스를 제공하기 위해 Nexus를 사용하는 선도적인 에이전시들과 함께하세요.
+        <section className="py-40 px-6 text-center relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-full bg-blue-600/5 rounded-full blur-[120px] -z-10" />
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-5xl md:text-6xl font-bold text-slate-900 mb-8 tracking-tight">지금 바로 PMO의 미래를 경험하세요.</h2>
+            <p className="text-2xl text-slate-500 mb-12 font-medium leading-relaxed">
+              수동적인 업무에서 벗어나, 데이터 기반의 스마트한 프로젝트 관리를 시작할 때입니다.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button className="system-btn-primary px-10 py-4 text-lg">
-                지금 시작하기
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+              <button className="w-full sm:w-auto px-12 py-6 bg-slate-900 text-white rounded-3xl text-xl font-bold hover:bg-slate-800 transition-all shadow-2xl shadow-slate-200">
+                무료로 시작하기
               </button>
-              <button className="system-btn-secondary px-10 py-4 text-lg">
-                데모 예약하기
+              <button className="w-full sm:w-auto px-12 py-6 bg-white border border-slate-200 text-slate-700 rounded-3xl text-xl font-bold hover:bg-slate-50 transition-all">
+                영업팀에 문의하기
               </button>
             </div>
+            <p className="mt-10 text-slate-400 font-medium">별도의 신용카드 등록이 필요 없습니다. 14일간 모든 기능을 무료로 체험하세요.</p>
           </div>
         </section>
       </main>

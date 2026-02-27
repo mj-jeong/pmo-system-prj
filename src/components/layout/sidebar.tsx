@@ -42,7 +42,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Reports", labelKey: "nav.reports", href: "/reports", icon: FileText, minRole: "ADMIN" },
   { label: "Members", labelKey: "nav.members", href: "/settings/members", icon: Users, minRole: "ADMIN" },
   { label: "Audit Logs", labelKey: "nav.auditLogs", href: "/settings/audit-logs", icon: Shield, minRole: "ADMIN" },
-  { label: "Usage", labelKey: "nav.usage", href: "/settings/usage", icon: BarChart3, minRole: "ADMIN" },
+  { label: "AI Usage", labelKey: "nav.usage", href: "/settings/usage", icon: BarChart3, minRole: "ADMIN" },
   { label: "Settings", labelKey: "nav.settings", href: "/settings", icon: Settings, minRole: "OWNER" },
 ];
 

@@ -7,7 +7,7 @@ import bcrypt from "bcryptjs";
 
 import { prisma } from "@/lib/db/prisma";
 import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
-import { registerSchema } from "@/lib/validators/user";
+import { registerApiSchema } from "@/lib/validators/user";
 import { createSuccessResponse } from "@/types/api";
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest): Promise<Response> {
     const body = await req.json();
 
     // Validate input
-    const parsed = registerSchema.safeParse(body);
+    const parsed = registerApiSchema.safeParse(body);
     if (!parsed.success) {
       const details = parsed.error.errors.map((e) => ({
         field: e.path.join("."),

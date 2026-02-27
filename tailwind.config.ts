@@ -81,10 +81,22 @@ const config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
+        'blob-drift': {
+          '0%, 100%': { transform: 'translate(0px, 0px) scale(1)' },
+          '33%': { transform: 'translate(20px, -15px) scale(1.05)' },
+          '66%': { transform: 'translate(-10px, 10px) scale(0.97)' },
+        },
+        'progress-fill': {
+          '0%': { width: '0%' },
+          '100%': { width: 'var(--progress-target)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'blob-drift': 'blob-drift 7s ease-in-out infinite',
+        'blob-drift-delay': 'blob-drift 9s ease-in-out infinite 2s',
+        'progress-fill': 'progress-fill 1.5s ease-out forwards',
       },
     },
   },

@@ -15,6 +15,7 @@ interface TranslationDict {
     reports: string;
     members: string;
     auditLogs: string;
+    usage: string;
     settings: string;
   };
   pages: {
@@ -60,6 +61,7 @@ export const translations: Record<Language, TranslationDict> = {
       reports: "리포트",
       members: "멤버 관리",
       auditLogs: "감사 로그",
+      usage: "AI 사용량",
       settings: "설정",
     },
     pages: {
@@ -106,6 +108,7 @@ export const translations: Record<Language, TranslationDict> = {
       reports: "Reports",
       members: "Members",
       auditLogs: "Audit Logs",
+      usage: "AI Usage",
       settings: "Settings",
     },
     pages: {
@@ -152,6 +155,7 @@ export const translations: Record<Language, TranslationDict> = {
       reports: "レポート",
       members: "メンバー管理",
       auditLogs: "監査ログ",
+      usage: "AI使用量",
       settings: "設定",
     },
     pages: {
@@ -198,6 +202,7 @@ export const translations: Record<Language, TranslationDict> = {
       reports: "报告",
       members: "成员管理",
       auditLogs: "审计日志",
+      usage: "AI使用量",
       settings: "设置",
     },
     pages: {
@@ -244,6 +249,7 @@ export const translations: Record<Language, TranslationDict> = {
       reports: "Báo cáo",
       members: "Quản lý thành viên",
       auditLogs: "Nhật ký kiểm tra",
+      usage: "Sử dụng AI",
       settings: "Cài đặt",
     },
     pages: {
