@@ -68,13 +68,13 @@ export default function TimeOffPage() {
 
   const columns: DataTableColumn<TimeOffWithUser>[] = [
     {
-      header: "Requester",
+      header: t("timeOff.requesterHeader"),
       cell: (row) => (
         <span className="font-medium">{row.user.name}</span>
       ),
     },
     {
-      header: "Type",
+      header: t("timeOff.typeHeader"),
       cell: (row) => (
         <span className="text-sm capitalize">
           {row.type.toLowerCase()}
@@ -83,21 +83,21 @@ export default function TimeOffPage() {
     },
     {
       key: "startDate",
-      header: "Start Date",
-      cell: (row) => format(new Date(row.startDate), "MMM d, yyyy"),
+      header: t("timeOff.startDateHeader"),
+      cell: (row) => format(new Date(row.startDate), "yyyy.MM.dd"),
     },
     {
       key: "endDate",
-      header: "End Date",
-      cell: (row) => format(new Date(row.endDate), "MMM d, yyyy"),
+      header: t("timeOff.endDateHeader"),
+      cell: (row) => format(new Date(row.endDate), "yyyy.MM.dd"),
     },
     {
       key: "status",
-      header: "Status",
+      header: t("timeOff.statusHeader"),
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: "Reason",
+      header: t("timeOff.reasonHeader"),
       cell: (row) => (
         <span className="text-sm text-muted-foreground line-clamp-1">
           {row.reason ?? "--"}
@@ -105,7 +105,7 @@ export default function TimeOffPage() {
       ),
     },
     {
-      header: "Actions",
+      header: t("timeOff.actionsHeader"),
       cell: (row) => {
         if (row.status !== "PENDING") return null;
 
@@ -118,7 +118,7 @@ export default function TimeOffPage() {
                 className="h-8 w-8 text-success hover:text-success"
                 onClick={() => approveTimeOff.mutate(row.id)}
                 disabled={approveTimeOff.isPending}
-                aria-label="Approve"
+                aria-label={t("common.confirm")}
               >
                 <Check className="h-4 w-4" />
               </Button>
@@ -128,7 +128,7 @@ export default function TimeOffPage() {
                 className="h-8 w-8 text-destructive hover:text-destructive"
                 onClick={() => rejectTimeOff.mutate(row.id)}
                 disabled={rejectTimeOff.isPending}
-                aria-label="Reject"
+                aria-label={t("common.delete")}
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -149,7 +149,7 @@ export default function TimeOffPage() {
             <DialogTrigger asChild>
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Request Time Off
+                {t("timeOff.requestTimeOff")}
               </Button>
             </DialogTrigger>
             <CreateTimeOffDialog onClose={() => setDialogOpen(false)} />
@@ -167,13 +167,13 @@ export default function TimeOffPage() {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t("timeOff.filterByStatus")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="PENDING">Pending</SelectItem>
-            <SelectItem value="APPROVED">Approved</SelectItem>
-            <SelectItem value="REJECTED">Rejected</SelectItem>
+            <SelectItem value="all">{t("timeOff.allStatuses")}</SelectItem>
+            <SelectItem value="PENDING">{t("timeOff.pending")}</SelectItem>
+            <SelectItem value="APPROVED">{t("timeOff.approved")}</SelectItem>
+            <SelectItem value="REJECTED">{t("timeOff.rejected")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -193,17 +193,17 @@ export default function TimeOffPage() {
         ) : (
           <EmptyState
             icon={CalendarOff}
-            title="No time-off requests"
+            title={t("timeOff.noRequests")}
             description={
               statusFilter !== "all"
-                ? "No requests match the selected filter."
-                : "Submit a time-off request when you need leave."
+                ? t("timeOff.noRequestsFilter")
+                : t("timeOff.noRequestsDesc")
             }
             action={
               statusFilter === "all" && (
                 <Button onClick={() => setDialogOpen(true)}>
                   <Plus className="mr-2 h-4 w-4" />
-                  Request Time Off
+                  {t("timeOff.requestTimeOff")}
                 </Button>
               )
             }
@@ -215,6 +215,7 @@ export default function TimeOffPage() {
 }
 
 function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const createTimeOff = useCreateTimeOff();
 
   const {
@@ -248,22 +249,22 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Request Time Off</DialogTitle>
+        <DialogTitle>{t("timeOff.requestFormTitle")}</DialogTitle>
         <DialogDescription>
-          Submit a new time-off request for review.
+          {t("timeOff.requestFormDesc")}
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label>Type</Label>
+          <Label>{t("timeOff.type")}</Label>
           <Select onValueChange={(val) => setValue("type", val as any)}>
             <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+              <SelectValue placeholder={t("timeOff.selectType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="VACATION">Vacation</SelectItem>
-              <SelectItem value="SICK">Sick Leave</SelectItem>
-              <SelectItem value="PERSONAL">Personal</SelectItem>
+              <SelectItem value="VACATION">{t("timeOff.vacation")}</SelectItem>
+              <SelectItem value="SICK">{t("timeOff.sickLeave")}</SelectItem>
+              <SelectItem value="PERSONAL">{t("timeOff.personal")}</SelectItem>
             </SelectContent>
           </Select>
           {errors.type && (
@@ -272,7 +273,7 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="to-start">Start Date</Label>
+            <Label htmlFor="to-start">{t("timeOff.startDate")}</Label>
             <Input id="to-start" type="date" {...register("startDate")} />
             {errors.startDate && (
               <p className="text-sm text-destructive">
@@ -281,7 +282,7 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="to-end">End Date</Label>
+            <Label htmlFor="to-end">{t("timeOff.endDate")}</Label>
             <Input id="to-end" type="date" {...register("endDate")} />
             {errors.endDate && (
               <p className="text-sm text-destructive">
@@ -291,10 +292,10 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="to-reason">Reason (optional)</Label>
+          <Label htmlFor="to-reason">{t("timeOff.reasonOptional")}</Label>
           <Textarea
             id="to-reason"
-            placeholder="Provide a reason for the request"
+            placeholder={t("timeOff.provideReason")}
             {...register("reason")}
           />
           {errors.reason && (
@@ -303,10 +304,10 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={createTimeOff.isPending}>
-            {createTimeOff.isPending ? "Submitting..." : "Submit Request"}
+            {createTimeOff.isPending ? t("timeOff.submitting") : t("timeOff.submitRequest")}
           </Button>
         </DialogFooter>
       </form>

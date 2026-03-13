@@ -22,6 +22,7 @@ import {
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { apiGet } from "@/lib/api/client";
 import type { ApiResponse } from "@/types/api";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // ============================================================================
 // Types
@@ -57,7 +58,6 @@ function getRecentMonths(): { value: string; label: string }[] {
 }
 
 function formatCostUsd(cost: number): string {
-  // Show at least 6 significant decimal places for small amounts
   if (cost === 0) return "$0.00";
   if (cost < 0.01) return `$${cost.toFixed(6)}`;
   return `$${cost.toFixed(4)}`;
@@ -114,6 +114,7 @@ function StatCard({ icon: Icon, title, value, description }: StatCardProps) {
 // ============================================================================
 
 export default function UsagePage() {
+  const { t } = useLanguage();
   const months = getRecentMonths();
   const [selectedMonth, setSelectedMonth] = useState<string>(months[0].value);
 
@@ -123,15 +124,15 @@ export default function UsagePage() {
   return (
     <PageContainer>
       <PageHeader
-        title="LLM Usage"
-        description="Monitor AI token consumption and estimated costs per month."
+        title={t("pages.usage.title")}
+        description={t("pages.usage.description")}
       />
 
       {/* Month Selector */}
       <div className="mt-4">
         <Select value={selectedMonth} onValueChange={setSelectedMonth}>
           <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Select month" />
+            <SelectValue placeholder={t("usage.selectMonth")} />
           </SelectTrigger>
           <SelectContent>
             {months.map((m) => (
@@ -151,21 +152,21 @@ export default function UsagePage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <StatCard
               icon={BarChart3}
-              title="Total Tokens"
+              title={t("usage.totalTokens")}
               value={stats?.totalTokens?.toLocaleString() ?? "0"}
-              description="Input + output tokens consumed this month"
+              description={t("usage.tokensDesc")}
             />
             <StatCard
               icon={DollarSign}
-              title="Estimated Cost"
+              title={t("usage.estimatedCost")}
               value={formatCostUsd(stats?.estimatedCostUsd ?? 0)}
-              description="Based on current model pricing"
+              description={t("usage.costDesc")}
             />
             <StatCard
               icon={FileText}
-              title="Reports Generated"
+              title={t("usage.reportsGenerated")}
               value={String(stats?.reportCount ?? 0)}
-              description="PMO reports created this month"
+              description={t("usage.reportsDesc")}
             />
           </div>
         )}

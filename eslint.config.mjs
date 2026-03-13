@@ -18,6 +18,8 @@ const eslintConfig = [
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      // 보안 규칙: dangerouslySetInnerHTML 사용 시 경고
+      'react/no-danger': 'warn',
     },
   },
   // Test files use dynamic require() to bypass server-only imports in Jest.

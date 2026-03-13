@@ -10,6 +10,7 @@
 //
 // Cron schedule (vercel.json): "0 9 * * 1" (Monday 09:00 UTC)
 
+import { timingSafeEqual } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { executeRun } from "@/lib/domain/agent-orchestrator";
@@ -61,7 +62,14 @@ export async function POST(req: NextRequest): Promise<Response> {
   const authHeader = req.headers.get("authorization");
   const providedToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
-  if (!providedToken || providedToken !== cronSecret) {
+  const tokenA = Buffer.from(providedToken ?? "");
+  const tokenB = Buffer.from(cronSecret);
+  const isValid =
+    providedToken !== null &&
+    tokenA.length === tokenB.length &&
+    timingSafeEqual(tokenA, tokenB);
+
+  if (!isValid) {
     console.warn("[cron/weekly-report] Unauthorized access attempt");
     return Response.json(
       { success: false, error: "Unauthorized" },

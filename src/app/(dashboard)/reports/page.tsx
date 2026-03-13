@@ -41,21 +41,21 @@ export default function ReportsPage() {
   const columns: DataTableColumn<ReportListItem>[] = [
     {
       key: "period",
-      header: "Period",
+      header: t("reports.periodHeader"),
       cell: (row) => {
-        const start = format(new Date(row.periodStart), "MMM d, yyyy");
-        const end = format(new Date(row.periodEnd), "MMM d, yyyy");
+        const start = format(new Date(row.periodStart), "yyyy.MM.dd");
+        const end = format(new Date(row.periodEnd), "yyyy.MM.dd");
         return (
           <div className="text-sm">
             <div className="font-medium">{start}</div>
-            <div className="text-muted-foreground">to {end}</div>
+            <div className="text-muted-foreground">~ {end}</div>
           </div>
         );
       },
     },
     {
       key: "status",
-      header: "Status",
+      header: t("reports.statusHeader"),
       cell: (row) => {
         const variant = row.status === "PUBLISHED" ? "success" : "warning";
         return (
@@ -63,7 +63,7 @@ export default function ReportsPage() {
             <StatusBadge
               status={row.status}
               variant={variant}
-              label={row.status === "PUBLISHED" ? "Published" : "Draft"}
+              label={row.status === "PUBLISHED" ? t("reports.published") : t("reports.draft")}
             />
             {row.isFallback && (
               <Badge
@@ -71,7 +71,7 @@ export default function ReportsPage() {
                 className="border-amber-400 text-amber-700 dark:text-amber-400 gap-1"
               >
                 <AlertTriangle className="h-3 w-3" />
-                Template-based
+                {t("reports.templateBased")}
               </Badge>
             )}
           </div>
@@ -80,32 +80,32 @@ export default function ReportsPage() {
     },
     {
       key: "detailLevel",
-      header: "Detail",
+      header: t("reports.detailHeader"),
       cell: (row) => (
         <span className="text-sm capitalize">{row.detailLevel.toLowerCase()}</span>
       ),
     },
     {
       key: "createdBy",
-      header: "Created By",
+      header: t("reports.createdByHeader"),
       cell: (row) => (
         <span className="text-sm">{row.createdBy.name}</span>
       ),
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: t("reports.createdHeader"),
       cell: (row) =>
-        format(new Date(row.createdAt), "MMM d, yyyy h:mm a"),
+        format(new Date(row.createdAt), "yyyy.MM.dd HH:mm"),
     },
     {
       key: "actions",
-      header: "Actions",
+      header: t("reports.actionsHeader"),
       cell: (row) => (
         <div className="flex items-center gap-2">
           <Link href={`/reports/${row.id}`}>
             <Button variant="outline" size="sm">
-              View
+              {t("reports.view")}
             </Button>
           </Link>
           {row.agentRun && (
@@ -130,7 +130,7 @@ export default function ReportsPage() {
             <Link href="/reports/generate">
               <Button>
                 <Plus className="mr-2 h-4 w-4" />
-                Generate Report
+                {t("reports.generateReport")}
               </Button>
             </Link>
           }
@@ -146,12 +146,12 @@ export default function ReportsPage() {
             }}
           >
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("reports.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="DRAFT">Draft</SelectItem>
-              <SelectItem value="PUBLISHED">Published</SelectItem>
+              <SelectItem value="all">{t("reports.allStatuses")}</SelectItem>
+              <SelectItem value="DRAFT">{t("reports.draft")}</SelectItem>
+              <SelectItem value="PUBLISHED">{t("reports.published")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -171,18 +171,18 @@ export default function ReportsPage() {
           ) : (
             <EmptyState
               icon={FileText}
-              title="No reports found"
+              title={t("reports.noReportsFound")}
               description={
                 statusFilter !== "all"
-                  ? "Try adjusting your filter criteria."
-                  : "Get started by generating your first report."
+                  ? t("reports.adjustFilter")
+                  : t("reports.getStarted")
               }
               action={
                 statusFilter === "all" && (
                   <Link href="/reports/generate">
                     <Button>
                       <Plus className="mr-2 h-4 w-4" />
-                      Generate Report
+                      {t("reports.generateReport")}
                     </Button>
                   </Link>
                 )

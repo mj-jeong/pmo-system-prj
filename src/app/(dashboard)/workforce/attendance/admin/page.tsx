@@ -35,8 +35,10 @@ import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAllAttendance, useUpdateAttendance } from "@/hooks/use-attendance";
 import type { AttendanceWithUser } from "@/lib/services/attendance.service";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function AdminAttendancePage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -57,7 +59,7 @@ export default function AdminAttendancePage() {
   const columns: DataTableColumn<AttendanceWithUser>[] = [
     {
       key: "user",
-      header: "Member",
+      header: t("attendanceAdmin.memberHeader"),
       cell: (row) => (
         <div>
           <p className="font-medium">{row.user.name}</p>
@@ -67,21 +69,21 @@ export default function AdminAttendancePage() {
     },
     {
       key: "date",
-      header: "Date",
-      cell: (row) => format(new Date(row.date), "MMM d, yyyy"),
+      header: t("attendance.date"),
+      cell: (row) => format(new Date(row.date), "yyyy.MM.dd"),
     },
     {
-      header: "Check In",
+      header: t("attendance.checkInLabel"),
       cell: (row) =>
         row.checkIn ? format(new Date(row.checkIn), "HH:mm") : "--:--",
     },
     {
-      header: "Check Out",
+      header: t("attendance.checkOutLabel"),
       cell: (row) =>
         row.checkOut ? format(new Date(row.checkOut), "HH:mm") : "--:--",
     },
     {
-      header: "Total Hours",
+      header: t("attendanceAdmin.totalHoursHeader"),
       cell: (row) => {
         if (!row.checkIn || !row.checkOut) return "--";
         const diff =
@@ -93,17 +95,17 @@ export default function AdminAttendancePage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: t("projects.statusHeader"),
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
-      header: "Actions",
+      header: t("attendanceAdmin.actionsHeader"),
       cell: (row) => (
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setEditRecord(row)}
-          aria-label="Edit attendance"
+          aria-label={t("attendanceAdmin.editAttendance")}
         >
           <Edit className="h-4 w-4" />
         </Button>
@@ -115,12 +117,12 @@ export default function AdminAttendancePage() {
     if (!data?.data) return;
 
     const headers = [
-      "Member",
+      t("attendanceAdmin.memberHeader"),
       "Email",
-      "Date",
-      "Check In",
-      "Check Out",
-      "Status",
+      t("attendance.date"),
+      t("attendance.checkInLabel"),
+      t("attendance.checkOutLabel"),
+      t("projects.statusHeader"),
     ];
     const rows = data.data.map((r) => [
       r.user.name,
@@ -145,17 +147,17 @@ export default function AdminAttendancePage() {
     <PageContainer>
       <div className="flex items-center gap-3 mb-4">
         <Link href="/workforce/attendance">
-          <Button variant="ghost" size="icon" aria-label="Back to attendance">
+          <Button variant="ghost" size="icon" aria-label={t("common.back")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <PageHeader
-          title="Team Attendance"
-          description="Monitor and manage team attendance records"
+          title={t("attendance.teamAttendance")}
+          description={t("attendanceAdmin.teamDescription")}
           actions={
             <Button variant="outline" onClick={handleExportCSV}>
               <Download className="mr-2 h-4 w-4" />
-              Export CSV
+              {t("attendanceAdmin.exportCsv")}
             </Button>
           }
         />
@@ -164,7 +166,7 @@ export default function AdminAttendancePage() {
       {/* Filters */}
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="space-y-1">
-          <Label className="text-xs">Start Date</Label>
+          <Label className="text-xs">{t("attendanceAdmin.startDate")}</Label>
           <Input
             type="date"
             value={startDate}
@@ -176,7 +178,7 @@ export default function AdminAttendancePage() {
           />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">End Date</Label>
+          <Label className="text-xs">{t("attendanceAdmin.endDate")}</Label>
           <Input
             type="date"
             value={endDate}
@@ -195,13 +197,13 @@ export default function AdminAttendancePage() {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t("attendanceAdmin.filterByStatus")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="CHECKED_IN">Checked In</SelectItem>
-            <SelectItem value="CHECKED_OUT">Checked Out</SelectItem>
-            <SelectItem value="ABSENT">Absent</SelectItem>
+            <SelectItem value="all">{t("attendanceAdmin.allStatuses")}</SelectItem>
+            <SelectItem value="CHECKED_IN">{t("attendanceAdmin.checkedIn")}</SelectItem>
+            <SelectItem value="CHECKED_OUT">{t("attendanceAdmin.checkedOut")}</SelectItem>
+            <SelectItem value="ABSENT">{t("attendanceAdmin.absent")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -221,8 +223,8 @@ export default function AdminAttendancePage() {
         ) : (
           <EmptyState
             icon={Users}
-            title="No attendance records"
-            description="Attendance records will appear here as team members check in."
+            title={t("attendanceAdmin.noRecords")}
+            description={t("attendanceAdmin.recordsWillAppear")}
           />
         )}
       </div>
@@ -245,6 +247,7 @@ function EditAttendanceDialog({
   record: AttendanceWithUser;
   onClose: () => void;
 }) {
+  const { t } = useLanguage();
   const updateAttendance = useUpdateAttendance();
 
   const {
@@ -261,7 +264,6 @@ function EditAttendanceDialog({
   });
 
   async function onSubmit(data: UpdateAttendanceInput) {
-    // Remove empty strings before sending
     const cleanData: UpdateAttendanceInput = {};
     if (data.checkIn) cleanData.checkIn = data.checkIn;
     if (data.checkOut) cleanData.checkOut = data.checkOut;
@@ -275,23 +277,22 @@ function EditAttendanceDialog({
     <Dialog open onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Attendance</DialogTitle>
+          <DialogTitle>{t("attendanceAdmin.editAttendance")}</DialogTitle>
           <DialogDescription>
-            Manual correction for {record.user.name} on{" "}
-            {format(new Date(record.date), "MMM d, yyyy")}
+            {t("attendanceAdmin.manualCorrectionFor")} {record.user.name} ({format(new Date(record.date), "yyyy.MM.dd")})
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label>Check In Time</Label>
+            <Label>{t("attendanceAdmin.checkInTime")}</Label>
             <Input type="datetime-local" {...register("checkIn")} />
           </div>
           <div className="space-y-2">
-            <Label>Check Out Time</Label>
+            <Label>{t("attendanceAdmin.checkOutTime")}</Label>
             <Input type="datetime-local" {...register("checkOut")} />
           </div>
           <div className="space-y-2">
-            <Label>Status</Label>
+            <Label>{t("projects.statusHeader")}</Label>
             <Select
               defaultValue={record.status}
               onValueChange={(val) => setValue("status", val as any)}
@@ -300,18 +301,18 @@ function EditAttendanceDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="CHECKED_IN">Checked In</SelectItem>
-                <SelectItem value="CHECKED_OUT">Checked Out</SelectItem>
-                <SelectItem value="ABSENT">Absent</SelectItem>
+                <SelectItem value="CHECKED_IN">{t("attendanceAdmin.checkedIn")}</SelectItem>
+                <SelectItem value="CHECKED_OUT">{t("attendanceAdmin.checkedOut")}</SelectItem>
+                <SelectItem value="ABSENT">{t("attendanceAdmin.absent")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={updateAttendance.isPending}>
-              {updateAttendance.isPending ? "Saving..." : "Save"}
+              {updateAttendance.isPending ? t("attendanceAdmin.saving") : t("common.save")}
             </Button>
           </DialogFooter>
         </form>

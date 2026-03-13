@@ -26,7 +26,7 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob:",
       "font-src 'self' data:",
@@ -34,6 +34,7 @@ const securityHeaders = [
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
+      "report-uri /api/v1/csp-report",
     ].join('; '),
   },
   // Legacy XSS protection for older browsers
@@ -49,15 +50,8 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   images: {
-    remotePatterns: [
-      {
-        hostname: '**',
-      },
-    ],
+    remotePatterns: [],
   },
   // Disable X-Powered-By header to reduce fingerprinting
   poweredByHeader: false,

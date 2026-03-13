@@ -95,11 +95,12 @@ export const PATCH = withOrgScope(
           );
         }
 
-        // REJECT
+        // REJECT — 민감 데이터(hashedPassword) 즉시 삭제
         await prisma.membershipRequest.update({
           where: { id },
           data: {
             status: "REJECTED",
+            hashedPassword: null,
             reviewedBy: session.id,
             reviewedAt: new Date(),
           },

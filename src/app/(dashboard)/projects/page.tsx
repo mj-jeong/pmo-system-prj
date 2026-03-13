@@ -62,7 +62,7 @@ export default function ProjectsPage() {
   const columns: DataTableColumn<ProjectResponse>[] = [
     {
       key: "name",
-      header: "Name",
+      header: t("projects.nameHeader"),
       cell: (row) => (
         <Link
           href={`/projects/${row.id}`}
@@ -74,12 +74,12 @@ export default function ProjectsPage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: t("projects.statusHeader"),
       cell: (row) => <StatusBadge status={row.status} />,
     },
     {
       key: "progress",
-      header: "Progress",
+      header: t("projects.progressHeader"),
       cell: (row) => (
         <div className="flex items-center gap-2">
           <div className="flex-1 rounded-full bg-muted h-2 w-20">
@@ -94,9 +94,9 @@ export default function ProjectsPage() {
     },
     {
       key: "createdAt",
-      header: "Created",
+      header: t("projects.createdHeader"),
       cell: (row) =>
-        new Date(row.createdAt).toLocaleDateString("en-US", {
+        new Date(row.createdAt).toLocaleDateString("ko-KR", {
           month: "short",
           day: "numeric",
           year: "numeric",
@@ -125,7 +125,7 @@ export default function ProjectsPage() {
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  New Project
+                  {t("projects.newProject")}
                 </Button>
               </DialogTrigger>
               <CreateProjectDialog onClose={() => setDialogOpen(false)} />
@@ -139,7 +139,7 @@ export default function ProjectsPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search projects..."
+            placeholder={t("projects.searchPlaceholder")}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -156,14 +156,14 @@ export default function ProjectsPage() {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by status" />
+            <SelectValue placeholder={t("projects.filterByStatus")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="PLANNED">Planned</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="BLOCKED">Blocked</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
+            <SelectItem value="all">{t("projects.allStatuses")}</SelectItem>
+            <SelectItem value="PLANNED">{t("projects.planned")}</SelectItem>
+            <SelectItem value="IN_PROGRESS">{t("projects.inProgress")}</SelectItem>
+            <SelectItem value="BLOCKED">{t("projects.blocked")}</SelectItem>
+            <SelectItem value="COMPLETED">{t("projects.completed")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -186,11 +186,11 @@ export default function ProjectsPage() {
         ) : (
           <EmptyState
             icon={FolderKanban}
-            title="No projects found"
+            title={t("projects.noProjectsFound")}
             description={
               search || statusFilter !== "all"
-                ? "Try adjusting your search or filter criteria."
-                : "Get started by creating your first project."
+                ? t("projects.adjustSearchFilter")
+                : t("projects.createFirstProject")
             }
             action={
               !search &&
@@ -198,7 +198,7 @@ export default function ProjectsPage() {
                 <RoleGuard role="ADMIN">
                   <Button onClick={() => setDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
-                    Create Project
+                    {t("projects.createProject")}
                   </Button>
                 </RoleGuard>
               )
@@ -211,6 +211,7 @@ export default function ProjectsPage() {
 }
 
 function CreateProjectDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useLanguage();
   const createProject = useCreateProject();
 
   const {
@@ -248,17 +249,17 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
   return (
     <DialogContent className="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Create Project</DialogTitle>
+        <DialogTitle>{t("projects.createProject")}</DialogTitle>
         <DialogDescription>
-          Add a new project to your organization.
+          {t("projects.addNewProject")}
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="project-name">Project Name</Label>
+          <Label htmlFor="project-name">{t("projects.projectName")}</Label>
           <Input
             id="project-name"
-            placeholder="Enter project name"
+            placeholder={t("projects.enterProjectName")}
             {...register("name")}
           />
           {errors.name && (
@@ -266,10 +267,10 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="project-desc">Description</Label>
+          <Label htmlFor="project-desc">{t("projects.description")}</Label>
           <Textarea
             id="project-desc"
-            placeholder="Optional description"
+            placeholder={t("projects.optionalDescription")}
             {...register("description")}
           />
           {errors.description && (
@@ -280,7 +281,7 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="start-date">Start Date</Label>
+            <Label htmlFor="start-date">{t("projects.startDate")}</Label>
             <Input
               id="start-date"
               type="datetime-local"
@@ -288,7 +289,7 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="end-date">End Date</Label>
+            <Label htmlFor="end-date">{t("projects.endDate")}</Label>
             <Input
               id="end-date"
               type="datetime-local"
@@ -302,10 +303,10 @@ function CreateProjectDialog({ onClose }: { onClose: () => void }) {
             variant="outline"
             onClick={onClose}
           >
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button type="submit" disabled={createProject.isPending}>
-            {createProject.isPending ? "Creating..." : "Create"}
+            {createProject.isPending ? t("projects.creating") : t("common.create")}
           </Button>
         </DialogFooter>
       </form>

@@ -76,6 +76,14 @@ const serverEnvSchema = z.object({
     .string()
     .transform(Number)
     .default("48"),
+
+  // Cron job authentication secret.
+  // Required for: POST /api/v1/cron/weekly-report
+  // Generate with: openssl rand -base64 32
+  CRON_SECRET: z
+    .string()
+    .min(32, "CRON_SECRET must be at least 32 characters")
+    .optional(),
 });
 
 /**

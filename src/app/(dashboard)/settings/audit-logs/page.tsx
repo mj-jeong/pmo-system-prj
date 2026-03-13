@@ -23,26 +23,11 @@ import {
 import { LoadingSkeleton } from "@/components/ui/loading-skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useAuditLogs } from "@/hooks/use-organization";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // ---------------------------------------------------------------------------
-// Audit action labels for display
+// Action color map (static — no translation needed)
 // ---------------------------------------------------------------------------
-
-const ACTION_LABELS: Record<string, string> = {
-  PROJECT_CREATED: "Project Created",
-  PROJECT_UPDATED: "Project Updated",
-  PROJECT_DELETED: "Project Deleted",
-  PROJECT_STATUS_CHANGED: "Status Changed",
-  REPORT_GENERATED: "Report Generated",
-  REPORT_PUBLISHED: "Report Published",
-  MEMBER_INVITED: "Member Invited",
-  MEMBER_APPROVED: "Member Approved",
-  MEMBER_REJECTED: "Member Rejected",
-  MEMBER_REMOVED: "Member Removed",
-  TIME_OFF_APPROVED: "Time Off Approved",
-  TIME_OFF_REJECTED: "Time Off Rejected",
-  ORG_SETTINGS_UPDATED: "Settings Updated",
-};
 
 const ACTION_COLORS: Record<string, string> = {
   PROJECT_CREATED: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -81,6 +66,7 @@ const ENTITY_TYPES = ["Project", "Report", "User", "TimeOff", "Organization"];
 // ---------------------------------------------------------------------------
 
 export default function AuditLogsPage() {
+  const { t } = useLanguage();
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState<string>("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
@@ -94,11 +80,28 @@ export default function AuditLogsPage() {
 
   const totalPages = data?.pagination.totalPages ?? 1;
 
+  // Translated action labels — computed inside component so t() is available
+  const actionLabels: Record<string, string> = {
+    PROJECT_CREATED: t("auditLogs.actionProjectCreated"),
+    PROJECT_UPDATED: t("auditLogs.actionProjectUpdated"),
+    PROJECT_DELETED: t("auditLogs.actionProjectDeleted"),
+    PROJECT_STATUS_CHANGED: t("auditLogs.actionProjectStatusChanged"),
+    REPORT_GENERATED: t("auditLogs.actionReportGenerated"),
+    REPORT_PUBLISHED: t("auditLogs.actionReportPublished"),
+    MEMBER_INVITED: t("auditLogs.actionMemberInvited"),
+    MEMBER_APPROVED: t("auditLogs.actionMemberApproved"),
+    MEMBER_REJECTED: t("auditLogs.actionMemberRejected"),
+    MEMBER_REMOVED: t("auditLogs.actionMemberRemoved"),
+    TIME_OFF_APPROVED: t("auditLogs.actionTimeOffApproved"),
+    TIME_OFF_REJECTED: t("auditLogs.actionTimeOffRejected"),
+    ORG_SETTINGS_UPDATED: t("auditLogs.actionOrgSettingsUpdated"),
+  };
+
   return (
     <PageContainer>
       <PageHeader
-        title="Audit Logs"
-        description="Track all significant actions taken within your organization."
+        title={t("pages.auditLogs.title")}
+        description={t("pages.auditLogs.description")}
       />
 
       {/* Filters */}
@@ -111,13 +114,13 @@ export default function AuditLogsPage() {
           }}
         >
           <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Filter by action" />
+            <SelectValue placeholder={t("auditLogs.filterByAction")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Actions</SelectItem>
+            <SelectItem value="all">{t("auditLogs.allActions")}</SelectItem>
             {ALL_ACTIONS.map((a) => (
               <SelectItem key={a} value={a}>
-                {ACTION_LABELS[a] ?? a}
+                {actionLabels[a] ?? a}
               </SelectItem>
             ))}
           </SelectContent>
@@ -131,10 +134,10 @@ export default function AuditLogsPage() {
           }}
         >
           <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by entity" />
+            <SelectValue placeholder={t("auditLogs.filterByEntity")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Entities</SelectItem>
+            <SelectItem value="all">{t("auditLogs.allEntities")}</SelectItem>
             {ENTITY_TYPES.map((e) => (
               <SelectItem key={e} value={e}>
                 {e}
@@ -149,10 +152,10 @@ export default function AuditLogsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Shield className="h-4 w-4" />
-            Activity Log
+            {t("auditLogs.activityLog")}
             {data && (
               <span className="ml-auto text-sm font-normal text-muted-foreground">
-                {data.pagination.total} records
+                {data.pagination.total} {t("auditLogs.records")}
               </span>
             )}
           </CardTitle>
@@ -174,11 +177,11 @@ export default function AuditLogsPage() {
                       <span
                         className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${getActionColor(entry.action)}`}
                       >
-                        {ACTION_LABELS[entry.action] ?? entry.action}
+                        {actionLabels[entry.action] ?? entry.action}
                       </span>
                       <span className="text-sm font-medium">{entry.actor.name}</span>
                       <span className="text-xs text-muted-foreground">
-                        on {entry.entityType}
+                        {t("auditLogs.on")} {entry.entityType}
                       </span>
                     </div>
                     {entry.meta && Object.keys(entry.meta).length > 0 && (
@@ -199,8 +202,8 @@ export default function AuditLogsPage() {
             <div className="p-6">
               <EmptyState
                 icon={Shield}
-                title="No audit logs"
-                description="Actions taken by your team will appear here."
+                title={t("auditLogs.noLogs")}
+                description={t("auditLogs.logsWillAppear")}
               />
             </div>
           )}
@@ -211,7 +214,7 @@ export default function AuditLogsPage() {
       {data && data.pagination.totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
+            {t("auditLogs.page")} {page} {t("auditLogs.of")} {totalPages}
           </p>
           <div className="flex gap-2">
             <Button
@@ -221,7 +224,7 @@ export default function AuditLogsPage() {
               onClick={() => setPage((p) => p - 1)}
             >
               <ChevronLeft className="h-4 w-4" />
-              Previous
+              {t("auditLogs.previous")}
             </Button>
             <Button
               variant="outline"
@@ -229,7 +232,7 @@ export default function AuditLogsPage() {
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
             >
-              Next
+              {t("auditLogs.next")}
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

@@ -3,12 +3,14 @@
 // Returns a paginated list of audit log entries for the current organization.
 // Requires ADMIN role or higher.
 
+import { z } from "zod";
 import { withOrgScope } from "@/lib/permissions/organization-scope";
 import { requireAdmin } from "@/lib/permissions/rbac";
 import { prisma } from "@/lib/db/prisma";
 import { createPaginatedResponse } from "@/types/api";
 import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
-import type { AuditAction, Prisma } from "@prisma/client";
+import { AuditAction } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 /**
  * GET /api/v1/settings/audit-logs
@@ -35,15 +37,36 @@ export const GET = withOrgScope(
 
       const skip = (page - 1) * limit;
 
-      // --- Optional filters ---
-      const actionParam = searchParams.get("action");
-      const entityTypeParam = searchParams.get("entityType");
+      // --- Optional filters (Zod runtime validation) ---
+      const filterSchema = z.object({
+        action: z.nativeEnum(AuditAction).optional(),
+        entityType: z
+          .string()
+          .max(50)
+          .regex(/^[a-zA-Z0-9_]+$/)
+          .optional(),
+      });
+
+      const filterResult = filterSchema.safeParse({
+        action: searchParams.get("action") ?? undefined,
+        entityType: searchParams.get("entityType") ?? undefined,
+      });
+
+      if (!filterResult.success) {
+        return createErrorResponse(
+          ERROR_CODES.VALIDATION_ERROR,
+          "유효하지 않은 필터 파라미터입니다.",
+          400
+        );
+      }
+
+      const { action, entityType } = filterResult.data;
 
       // Build the where clause
       const where: Prisma.AuditLogWhereInput = {
         organizationId,
-        ...(actionParam ? { action: actionParam as AuditAction } : {}),
-        ...(entityTypeParam ? { entityType: entityTypeParam } : {}),
+        ...(action ? { action } : {}),
+        ...(entityType ? { entityType } : {}),
       };
 
       // Run count and data queries in parallel

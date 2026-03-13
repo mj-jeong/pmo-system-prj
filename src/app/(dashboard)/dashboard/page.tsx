@@ -38,24 +38,24 @@ export default function DashboardPage() {
         ) : (
           <>
             <MetricCard
-              title="Total Projects"
+              title={t("dashboard.totalProjects")}
               value={summary?.totalProjects ?? 0}
               icon={FolderKanban}
             />
             <MetricCard
-              title="In Progress"
+              title={t("dashboard.inProgress")}
               value={summary?.inProgressProjects ?? 0}
               icon={FolderKanban}
               className="text-primary"
             />
             <MetricCard
-              title="Blocked"
+              title={t("dashboard.blocked")}
               value={summary?.blockedProjects ?? 0}
               icon={AlertTriangle}
               className="text-destructive"
             />
             <MetricCard
-              title="Completed"
+              title={t("dashboard.completed")}
               value={summary?.completedProjects ?? 0}
               icon={CheckCircle}
               className="text-success"
@@ -70,7 +70,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4" />
-              Workforce Today
+              {t("dashboard.workforceToday")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -79,28 +79,28 @@ export default function DashboardPage() {
             ) : workforce ? (
               <div className="space-y-3">
                 <WorkforceRow
-                  label="Total Members"
+                  label={t("dashboard.totalMembers")}
                   value={workforce.totalMembers}
                 />
                 <WorkforceRow
-                  label="Present"
+                  label={t("dashboard.present")}
                   value={workforce.presentToday}
                   colorClass="text-success"
                 />
                 <WorkforceRow
-                  label="Absent"
+                  label={t("dashboard.absent")}
                   value={workforce.absentToday}
                   colorClass="text-destructive"
                 />
                 <WorkforceRow
-                  label="On Leave"
+                  label={t("dashboard.onLeave")}
                   value={workforce.onLeaveToday}
                   colorClass="text-warning"
                 />
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                No workforce data available.
+                {t("dashboard.noWorkforceData")}
               </p>
             )}
           </CardContent>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
         {/* Recent Updates Feed */}
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle className="text-base">Recent Updates</CardTitle>
+            <CardTitle className="text-base">{t("dashboard.recentUpdates")}</CardTitle>
           </CardHeader>
           <CardContent>
             {updatesLoading ? (
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                           {update.author.name}
                         </span>
                         <span className="text-muted-foreground">
-                          on{" "}
+                          {t("dashboard.on")}{" "}
                           <span className="font-medium">
                             {update.project.name}
                           </span>
@@ -147,8 +147,8 @@ export default function DashboardPage() {
               </div>
             ) : (
               <EmptyState
-                title="No recent updates"
-                description="Project updates will appear here as team members add them."
+                title={t("dashboard.noRecentUpdates")}
+                description={t("dashboard.updatesWillAppear")}
               />
             )}
           </CardContent>
@@ -161,14 +161,13 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base text-destructive">
               <AlertTriangle className="h-4 w-4" />
-              Blocked Projects ({summary.blockedProjects})
+              {t("dashboard.blockedProjects")} ({summary.blockedProjects})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {summary.blockedProjects} project
-              {summary.blockedProjects > 1 ? "s are" : " is"} currently blocked.
-              Review the projects page for details.
+              {summary.blockedProjects}{t("dashboard.projectsBlockedSingular")}{" "}
+              {t("dashboard.reviewProjects")}
             </p>
           </CardContent>
         </Card>
@@ -179,7 +178,7 @@ export default function DashboardPage() {
         <div className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Average Progress</CardTitle>
+              <CardTitle className="text-base">{t("dashboard.averageProgress")}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-4">

@@ -5,6 +5,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { createSuccessResponse } from "@/types/api";
+import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
 
 /**
  * GET /api/v1/auth/check-email
@@ -73,11 +74,12 @@ export async function GET(req: NextRequest) {
       createSuccessResponse({ available: true }),
       { status: 200 }
     );
-  } catch {
-    // Fail silently — don't block UX on check failure
-    return Response.json(
-      createSuccessResponse({ available: true }),
-      { status: 200 }
+  } catch (error) {
+    console.error("[GET /api/v1/auth/check-email] Database error:", error);
+    return createErrorResponse(
+      ERROR_CODES.INTERNAL_ERROR,
+      "이메일 확인 중 오류가 발생했습니다.",
+      500
     );
   }
 }

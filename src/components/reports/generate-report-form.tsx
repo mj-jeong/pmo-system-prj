@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useProjects } from "@/hooks/use-projects";
 import { useGenerateReport } from "@/hooks/use-reports";
 import type { DetailLevel } from "@/lib/services/agent.service";
+import { useLanguage } from "@/lib/i18n/language-context";
 
 // ---------------------------------------------------------------------------
 // GenerateReportForm - Form to trigger new PMO report generation
@@ -28,27 +29,34 @@ import type { DetailLevel } from "@/lib/services/agent.service";
 // Redirects to run trace page on successful submission.
 // ---------------------------------------------------------------------------
 
-const formSchema = z.object({
-  periodStart: z.string().min(1, "Start date is required"),
-  periodEnd: z.string().min(1, "End date is required"),
-  projectIds: z.array(z.string()).min(1, "Select at least one project"),
-  detailLevel: z.enum(["BRIEF", "STANDARD", "DETAILED"]),
-}).refine(
-  (data) => new Date(data.periodStart) < new Date(data.periodEnd),
-  {
-    message: "Start date must be before end date",
-    path: ["periodEnd"],
-  }
-);
-
-type FormData = z.infer<typeof formSchema>;
-
 export function GenerateReportForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
   const { data: projectsData } = useProjects({ status: "IN_PROGRESS", limit: 100 });
   const generateReport = useGenerateReport();
+
+  const formSchema = useMemo(
+    () =>
+      z
+        .object({
+          periodStart: z.string().min(1, t("reports.startRequired")),
+          periodEnd: z.string().min(1, t("reports.endRequired")),
+          projectIds: z.array(z.string()).min(1, t("reports.selectOneProject")),
+          detailLevel: z.enum(["BRIEF", "STANDARD", "DETAILED"]),
+        })
+        .refine(
+          (data) => new Date(data.periodStart) < new Date(data.periodEnd),
+          {
+            message: t("reports.startBeforeEnd"),
+            path: ["periodEnd"],
+          }
+        ),
+    [t]
+  );
+
+  type FormData = z.infer<typeof formSchema>;
 
   // Default values: last 7 days, STANDARD detail
   const today = new Date();
@@ -110,7 +118,7 @@ export function GenerateReportForm() {
       {/* Date Range */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="periodStart">Period Start</Label>
+          <Label htmlFor="periodStart">{t("reports.periodStart")}</Label>
           <Input
             id="periodStart"
             type="date"
@@ -121,7 +129,7 @@ export function GenerateReportForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="periodEnd">Period End</Label>
+          <Label htmlFor="periodEnd">{t("reports.periodEnd")}</Label>
           <Input
             id="periodEnd"
             type="date"
@@ -136,19 +144,19 @@ export function GenerateReportForm() {
       {/* Project Selection */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <Label>Select Projects</Label>
+          <Label>{t("reports.selectProjects")}</Label>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={toggleAllProjects}
           >
-            {selectedProjects.size === activeProjects.length ? "Deselect All" : "Select All"}
+            {selectedProjects.size === activeProjects.length ? t("reports.deselectAll") : t("reports.selectAll")}
           </Button>
         </div>
         <div className="border rounded-md p-4 max-h-64 overflow-y-auto space-y-2">
           {activeProjects.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No active projects found</p>
+            <p className="text-sm text-muted-foreground">{t("reports.noActiveProjects")}</p>
           ) : (
             activeProjects.map((project) => (
               <div key={project.id} className="flex items-center space-x-2">
@@ -174,7 +182,7 @@ export function GenerateReportForm() {
 
       {/* Detail Level */}
       <div className="space-y-2">
-        <Label htmlFor="detailLevel">Detail Level</Label>
+        <Label htmlFor="detailLevel">{t("reports.detailLevel")}</Label>
         <Select
           defaultValue="STANDARD"
           onValueChange={(value) => setValue("detailLevel", value as DetailLevel)}
@@ -183,9 +191,9 @@ export function GenerateReportForm() {
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="BRIEF">Brief</SelectItem>
-            <SelectItem value="STANDARD">Standard</SelectItem>
-            <SelectItem value="DETAILED">Detailed</SelectItem>
+            <SelectItem value="BRIEF">{t("reports.brief")}</SelectItem>
+            <SelectItem value="STANDARD">{t("reports.standard")}</SelectItem>
+            <SelectItem value="DETAILED">{t("reports.detailed")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -197,10 +205,10 @@ export function GenerateReportForm() {
           variant="outline"
           onClick={() => router.push("/reports")}
         >
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button type="submit" disabled={generateReport.isPending}>
-          {generateReport.isPending ? "Generating..." : "Generate Report"}
+          {generateReport.isPending ? t("reports.generating") : t("reports.generate")}
         </Button>
       </div>
     </form>

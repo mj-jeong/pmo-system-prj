@@ -52,15 +52,7 @@ import {
 import type { WeekDay } from "@/lib/services/organization.service";
 import { useLanguage } from "@/lib/i18n/language-context";
 
-const WEEK_DAYS: { value: WeekDay; label: string }[] = [
-  { value: "MON", label: "Monday" },
-  { value: "TUE", label: "Tuesday" },
-  { value: "WED", label: "Wednesday" },
-  { value: "THU", label: "Thursday" },
-  { value: "FRI", label: "Friday" },
-  { value: "SAT", label: "Saturday" },
-  { value: "SUN", label: "Sunday" },
-];
+const WEEK_DAYS: WeekDay[] = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -76,6 +68,16 @@ export default function SettingsPage() {
   const [wsStart, setWsStart] = useState<string>("");
   const [wsEnd, setWsEnd] = useState<string>("");
   const [wsReportDay, setWsReportDay] = useState<string>("");
+
+  const weekDayLabels: Record<WeekDay, string> = {
+    MON: t("settings.monday"),
+    TUE: t("settings.tuesday"),
+    WED: t("settings.wednesday"),
+    THU: t("settings.thursday"),
+    FRI: t("settings.friday"),
+    SAT: t("settings.saturday"),
+    SUN: t("settings.sunday"),
+  };
 
   const {
     register,
@@ -132,15 +134,15 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Settings className="h-4 w-4" />
-              General
+              {t("settings.general")}
             </CardTitle>
             <CardDescription>
-              Update your organization name and slug.
+              {t("settings.updateOrgDesc")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="org-name">Organization Name</Label>
+              <Label htmlFor="org-name">{t("settings.orgName")}</Label>
               <Input
                 id="org-name"
                 {...register("name")}
@@ -152,7 +154,7 @@ export default function SettingsPage() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="org-slug">Slug</Label>
+              <Label htmlFor="org-slug">{t("settings.slug")}</Label>
               <Input
                 id="org-slug"
                 {...register("slug")}
@@ -163,7 +165,7 @@ export default function SettingsPage() {
                 </p>
               )}
               <p className="text-xs text-muted-foreground">
-                Lowercase letters, numbers, and hyphens only.
+                {t("settings.slugHint")}
               </p>
             </div>
           </CardContent>
@@ -172,7 +174,7 @@ export default function SettingsPage() {
               type="submit"
               disabled={!isDirty || updateOrg.isPending}
             >
-              {updateOrg.isPending ? "Saving..." : "Save Changes"}
+              {updateOrg.isPending ? t("settings.saving") : t("settings.saveChanges")}
             </Button>
           </CardFooter>
         </form>
@@ -183,13 +185,13 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <Clock className="h-4 w-4" />
-            Workspace Settings
+            {t("settings.workspaceSettings")}
           </CardTitle>
           <CardDescription>
-            Configure working hours and weekly report schedule.
+            {t("settings.workspaceDesc")}
             {wsSettings?.updatedAt && (
               <span className="ml-2 text-xs text-muted-foreground">
-                Last updated: {new Date(wsSettings.updatedAt).toLocaleDateString()}
+                {t("settings.lastUpdated")} {new Date(wsSettings.updatedAt).toLocaleDateString()}
               </span>
             )}
           </CardDescription>
@@ -201,13 +203,13 @@ export default function SettingsPage() {
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Work Start Hour</Label>
+                  <Label>{t("settings.workStartHour")}</Label>
                   <Select
                     value={wsStart || String(wsSettings?.workingHoursStart ?? "")}
                     onValueChange={setWsStart}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select hour" />
+                      <SelectValue placeholder={t("settings.selectHour")} />
                     </SelectTrigger>
                     <SelectContent>
                       {HOURS.map((h) => (
@@ -219,13 +221,13 @@ export default function SettingsPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Work End Hour</Label>
+                  <Label>{t("settings.workEndHour")}</Label>
                   <Select
                     value={wsEnd || String(wsSettings?.workingHoursEnd ?? "")}
                     onValueChange={setWsEnd}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select hour" />
+                      <SelectValue placeholder={t("settings.selectHour")} />
                     </SelectTrigger>
                     <SelectContent>
                       {HOURS.map((h) => (
@@ -238,24 +240,24 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Weekly Report Day</Label>
+                <Label>{t("settings.weeklyReportDay")}</Label>
                 <Select
                   value={wsReportDay || (wsSettings?.weeklyReportDay ?? "")}
                   onValueChange={setWsReportDay}
                 >
                   <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select day" />
+                    <SelectValue placeholder={t("settings.selectDay")} />
                   </SelectTrigger>
                   <SelectContent>
                     {WEEK_DAYS.map((d) => (
-                      <SelectItem key={d.value} value={d.value}>
-                        {d.label}
+                      <SelectItem key={d} value={d}>
+                        {weekDayLabels[d]}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  The day when weekly PMO reports are automatically generated.
+                  {t("settings.reportDayHint")}
                 </p>
               </div>
             </>
@@ -266,7 +268,7 @@ export default function SettingsPage() {
             role="OWNER"
             fallback={
               <p className="text-sm text-muted-foreground">
-                Only the organization owner can change workspace settings.
+                {t("settings.ownerOnly")}
               </p>
             }
           >
@@ -274,7 +276,7 @@ export default function SettingsPage() {
               onClick={handleSaveWorkspaceSettings}
               disabled={updateWsSettings.isPending}
             >
-              {updateWsSettings.isPending ? "Saving..." : "Save Workspace Settings"}
+              {updateWsSettings.isPending ? t("settings.saving") : t("settings.saveWorkspaceSettings")}
             </Button>
           </RoleGuard>
         </CardFooter>
@@ -284,10 +286,10 @@ export default function SettingsPage() {
       <Card className="mt-6 border-destructive/50">
         <CardHeader>
           <CardTitle className="text-base text-destructive">
-            Danger Zone
+            {t("settings.dangerZone")}
           </CardTitle>
           <CardDescription>
-            Irreversible actions that affect your entire organization.
+            {t("settings.dangerDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -295,16 +297,14 @@ export default function SettingsPage() {
             <DialogTrigger asChild>
               <Button variant="destructive">
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete Organization
+                {t("settings.deleteOrg")}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Delete Organization</DialogTitle>
+                <DialogTitle>{t("settings.deleteOrg")}</DialogTitle>
                 <DialogDescription>
-                  Are you sure you want to delete &quot;{org?.name}&quot;? This
-                  will permanently remove all projects, members, and data. This
-                  action cannot be undone.
+                  {t("settings.deleteConfirmPre")}{org?.name}{t("settings.deleteConfirmPost")}
                 </DialogDescription>
               </DialogHeader>
               <DialogFooter>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
                   variant="outline"
                   onClick={() => setDeleteDialogOpen(false)}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   variant="destructive"
@@ -320,8 +320,8 @@ export default function SettingsPage() {
                   disabled={deleteOrg.isPending}
                 >
                   {deleteOrg.isPending
-                    ? "Deleting..."
-                    : "Yes, Delete Organization"}
+                    ? t("settings.deleting")
+                    : t("settings.confirmDelete")}
                 </Button>
               </DialogFooter>
             </DialogContent>

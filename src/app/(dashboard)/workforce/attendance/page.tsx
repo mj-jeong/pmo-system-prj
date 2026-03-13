@@ -37,12 +37,12 @@ export default function AttendancePage() {
   const canCheckOut = isCheckedIn && !isCheckedOut;
 
   function getStatusMessage(): string {
-    if (!todayRecord) return "Not checked in today";
+    if (!todayRecord) return t("attendance.notCheckedIn");
     if (isCheckedIn && todayRecord.checkIn) {
-      return `Checked in at ${format(new Date(todayRecord.checkIn), "HH:mm")}`;
+      return `${t("attendance.checkedInAt")} ${format(new Date(todayRecord.checkIn), "HH:mm")}`;
     }
     if (isCheckedOut && todayRecord.checkOut) {
-      return `Checked out at ${format(new Date(todayRecord.checkOut), "HH:mm")}`;
+      return `${t("attendance.checkedOutAt")} ${format(new Date(todayRecord.checkOut), "HH:mm")}`;
     }
     return todayRecord.status;
   }
@@ -65,7 +65,7 @@ export default function AttendancePage() {
         actions={
           <RoleGuard role="ADMIN">
             <Link href="/workforce/attendance/admin">
-              <Button variant="outline">Team Attendance</Button>
+              <Button variant="outline">{t("attendance.teamAttendance")}</Button>
             </Link>
           </RoleGuard>
         }
@@ -82,7 +82,7 @@ export default function AttendancePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <Clock className="h-4 w-4" />
-                Today&apos;s Status
+                {t("attendance.todayStatus")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -97,7 +97,7 @@ export default function AttendancePage() {
                   <p className="text-lg font-medium">{getStatusMessage()}</p>
                   {getTotalHours() && (
                     <p className="mt-1 text-sm text-muted-foreground">
-                      Total: {getTotalHours()}
+                      {t("attendance.total")} {getTotalHours()}
                     </p>
                   )}
                 </div>
@@ -114,7 +114,7 @@ export default function AttendancePage() {
                     onClick={() => checkIn.mutate()}
                   >
                     <LogIn className="mr-2 h-5 w-5" />
-                    {checkIn.isPending ? "Checking in..." : "Check In"}
+                    {checkIn.isPending ? t("attendance.checkingIn") : t("attendance.checkIn")}
                   </Button>
                   <Button
                     size="lg"
@@ -126,7 +126,7 @@ export default function AttendancePage() {
                     onClick={() => checkOut.mutate()}
                   >
                     <LogOut className="mr-2 h-5 w-5" />
-                    {checkOut.isPending ? "Checking out..." : "Check Out"}
+                    {checkOut.isPending ? t("attendance.checkingOut") : t("attendance.checkOut")}
                   </Button>
                 </div>
               </div>
@@ -138,19 +138,19 @@ export default function AttendancePage() {
             <Card className="mt-4">
               <CardHeader>
                 <CardTitle className="text-base">
-                  Today&apos;s Summary
+                  {t("attendance.todaySummary")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <div>
-                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="text-sm text-muted-foreground">{t("attendance.date")}</p>
                     <p className="text-sm font-medium">
-                      {format(new Date(todayRecord.date), "MMMM d, yyyy")}
+                      {format(new Date(todayRecord.date), "yyyy.MM.dd")}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Check In</p>
+                    <p className="text-sm text-muted-foreground">{t("attendance.checkInLabel")}</p>
                     <p className="text-sm font-medium">
                       {todayRecord.checkIn
                         ? format(new Date(todayRecord.checkIn), "HH:mm:ss")
@@ -158,7 +158,7 @@ export default function AttendancePage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Check Out</p>
+                    <p className="text-sm text-muted-foreground">{t("attendance.checkOutLabel")}</p>
                     <p className="text-sm font-medium">
                       {todayRecord.checkOut
                         ? format(new Date(todayRecord.checkOut), "HH:mm:ss")
@@ -175,8 +175,8 @@ export default function AttendancePage() {
               <CardContent className="p-6">
                 <EmptyState
                   icon={CalendarCheck}
-                  title="No attendance record"
-                  description="Click the Check In button to start tracking your attendance for today."
+                  title={t("attendance.noAttendanceRecord")}
+                  description={t("attendance.clickCheckIn")}
                 />
               </CardContent>
             </Card>

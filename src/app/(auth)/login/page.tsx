@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -19,13 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
-const loginSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
+import { useLanguage } from "@/lib/i18n/language-context";
 
 export default function LoginPage() {
   return (
@@ -42,21 +36,38 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
+  const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const rawCallback = searchParams.get("callbackUrl") ?? "/";
+  // 상대경로만 허용: /로 시작하고 //로 시작하지 않아야 함 (protocol-relative URL 방지)
+  const callbackUrl =
+    rawCallback.startsWith("/") && !rawCallback.startsWith("//")
+      ? rawCallback
+      : "/";
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const loginSchema = useMemo(
+    () =>
+      z.object({
+        email: z.string().email(t("login.invalidEmail")),
+        password: z.string().min(1, t("login.passwordRequired")),
+      }),
+    [t]
+  );
+
+  type LoginFormData = z.infer<typeof loginSchema>;
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginForm>({
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  async function onSubmit(data: LoginForm) {
+  async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
     setError(null);
 
@@ -68,14 +79,14 @@ function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password.");
+        setError(t("login.invalidCredentials"));
         return;
       }
 
       router.push(callbackUrl);
       router.refresh();
     } catch {
-      setError("An unexpected error occurred. Please try again.");
+      setError(t("login.unexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -85,9 +96,9 @@ function LoginForm() {
     <div className="flex min-h-screen items-center justify-center bg-muted px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-2xl font-semibold">Sign in</CardTitle>
+          <CardTitle className="text-2xl font-semibold">{t("login.title")}</CardTitle>
           <CardDescription>
-            Enter your credentials to access the PMO system
+            {t("login.description")}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit(onSubmit)}>
@@ -98,11 +109,11 @@ function LoginForm() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("login.email")}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 autoComplete="email"
                 disabled={isLoading}
                 {...register("email")}
@@ -114,11 +125,11 @@ function LoginForm() {
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t("login.password")}</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t("login.passwordPlaceholder")}
                 autoComplete="current-password"
                 disabled={isLoading}
                 {...register("password")}
@@ -132,15 +143,15 @@ function LoginForm() {
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? t("login.signingIn") : t("login.signIn")}
             </Button>
             <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
+              {t("login.noAccount")}{" "}
               <Link
                 href="/register"
                 className="font-medium text-primary underline-offset-4 hover:underline"
               >
-                Register
+                {t("login.register")}
               </Link>
             </p>
           </CardFooter>

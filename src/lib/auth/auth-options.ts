@@ -46,7 +46,9 @@ export const authOptions: NextAuthOptions = {
         if (!user) {
           // Timing-safe: still return null even if user not found
           // bcrypt.compare with a dummy hash prevents timing attacks
-          await bcrypt.compare(credentials.password, "$2a$10$dummyhashfortimingatk");
+          // 유효한 60자 bcrypt 해시 필요 (30자 미달 시 bcryptjs가 즉시 false 반환하여 timing 보호 무력화)
+          const DUMMY_BCRYPT_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+          await bcrypt.compare(credentials.password, DUMMY_BCRYPT_HASH);
           return null;
         }
 

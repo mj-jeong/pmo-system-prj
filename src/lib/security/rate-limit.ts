@@ -153,12 +153,13 @@ export const sensitiveLimiter = new RateLimiter({
  * then falls back to the connection address.
  */
 export function getClientIp(request: Request): string {
-  // Check forwarded headers (set by reverse proxies)
+  // Railway 배포 환경: 로드 밸런서가 클라이언트 IP를 X-Forwarded-For의 마지막에 추가.
+  // 첫 번째 IP는 클라이언트가 스푸핑 가능하므로 마지막 값을 신뢰함.
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
-    // X-Forwarded-For may contain multiple IPs; first is the client
-    const firstIp = forwarded.split(",")[0]?.trim();
-    if (firstIp) return firstIp;
+    const ips = forwarded.split(",").map((ip) => ip.trim()).filter(Boolean);
+    const lastIp = ips[ips.length - 1];
+    if (lastIp) return lastIp;
   }
 
   const realIp = request.headers.get("x-real-ip");

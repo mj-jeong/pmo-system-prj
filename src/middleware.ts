@@ -9,6 +9,7 @@
 
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 // ============================================================================
 // Route Classification
@@ -91,10 +92,13 @@ function checkRateLimit(
  * Extract client IP from request headers.
  */
 function getClientIp(request: NextRequest): string {
+  // Railway 배포 환경: 로드 밸런서가 클라이언트 IP를 X-Forwarded-For의 마지막에 추가.
+  // 첫 번째 IP는 클라이언트가 스푸핑 가능하므로 마지막 값을 신뢰함.
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
-    const firstIp = forwarded.split(",")[0]?.trim();
-    if (firstIp) return firstIp;
+    const ips = forwarded.split(",").map((ip) => ip.trim()).filter(Boolean);
+    const lastIp = ips[ips.length - 1];
+    if (lastIp) return lastIp;
   }
   const realIp = request.headers.get("x-real-ip");
   if (realIp) return realIp;
@@ -136,7 +140,7 @@ const BODY_METHODS = new Set(["POST", "PATCH", "PUT"]);
 // Main Middleware
 // ============================================================================
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method.toUpperCase();
 
@@ -231,7 +235,7 @@ export function middleware(request: NextRequest) {
 
     // 4. Content-Type validation for state-changing requests
     // EXCEPT for NextAuth routes (they use application/x-www-form-urlencoded)
-    if (BODY_METHODS.has(method) && !pathname.startsWith("/api/auth")) {
+    if (BODY_METHODS.has(method) && !pathname.startsWith("/api/auth") && pathname !== "/api/v1/csp-report") {
       const contentType = request.headers.get("content-type");
       // Only enforce if content-type is present but not JSON
       // (some endpoints like check-in may have empty bodies)
@@ -280,10 +284,11 @@ export function middleware(request: NextRequest) {
   // ------- Public pages: allow without auth -------
   // For the root landing page, redirect authenticated users to /dashboard
   if (pathname === "/") {
-    const sessionToken =
-      request.cookies.get("next-auth.session-token")?.value ??
-      request.cookies.get("__Secure-next-auth.session-token")?.value;
-    if (sessionToken) {
+    const token = await getToken({
+      req: request,
+      secret: process.env.AUTH_SECRET,
+    });
+    if (token) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
     return NextResponse.next();
@@ -293,12 +298,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // ------- Protected pages: require session -------
-  const sessionToken =
-    request.cookies.get("next-auth.session-token")?.value ??
-    request.cookies.get("__Secure-next-auth.session-token")?.value;
+  // ------- Protected pages: require valid JWT (signature + expiry verified) -------
+  const token = await getToken({
+    req: request,
+    secret: process.env.AUTH_SECRET,
+  });
 
-  if (!sessionToken) {
+  if (!token) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);

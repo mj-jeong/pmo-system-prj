@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import { Plus, Users, Trash2, Copy, Check, Download, QrCode, Mail, Link } from "lucide-react";
 
 import { PageContainer } from "@/components/layout/page-container";
@@ -239,7 +240,11 @@ function InviteMemberDialog({ onClose }: { onClose: () => void }) {
             <>
               <div
                 className="mx-auto w-fit rounded-lg border bg-white p-3"
-                dangerouslySetInnerHTML={{ __html: qrResult.qrSvg }}
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(qrResult.qrSvg, {
+                    USE_PROFILES: { svg: true },
+                  }),
+                }}
               />
               <p className="text-center text-xs text-muted-foreground">
                 만료: {new Date(qrResult.expiresAt).toLocaleString("ko-KR")}
