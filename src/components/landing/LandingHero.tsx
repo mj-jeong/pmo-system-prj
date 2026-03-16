@@ -40,7 +40,7 @@ export function LandingHero() {
               무료 데모 시작하기{" "}
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
             </Link>
-            <Link href="https://github.com" className="landing-btn-secondary-lg w-full sm:w-auto">
+            <Link href="https://github.com/mj-jeong/pmo-system-prj" className="landing-btn-secondary-lg w-full sm:w-auto">
               <Github className="w-5 h-5" aria-hidden="true" /> GitHub 저장소
             </Link>
           </div>
