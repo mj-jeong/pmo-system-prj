@@ -37,7 +37,16 @@ export interface AttendanceFilter extends PaginationParams {
 // Time-Off Types
 // ============================================================================
 
-export type TimeOffType = "VACATION" | "SICK" | "PERSONAL";
+export type TimeOffType =
+  | "VACATION"
+  | "HALF_DAY"
+  | "QUARTER_DAY"
+  | "SICK"
+  | "SPECIAL"
+  | "CONDOLENCE"
+  | "HEALTH"
+  | "UNPAID"
+  | "PAID";
 export type TimeOffStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface TimeOffFilter extends PaginationParams {

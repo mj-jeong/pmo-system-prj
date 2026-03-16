@@ -154,6 +154,14 @@ function LoginForm() {
                 {t("login.register")}
               </Link>
             </p>
+            <p className="text-center text-sm text-muted-foreground">
+              <Link
+                href="/"
+                className="font-medium text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+              >
+                ← 홈으로 돌아가기
+              </Link>
+            </p>
           </CardFooter>
         </form>
       </Card>

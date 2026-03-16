@@ -272,7 +272,7 @@ async function main() {
       userId: eveMember.id,
       startDate: new Date("2026-02-15"),
       endDate: new Date("2026-02-17"),
-      type: "PERSONAL",
+      type: "SPECIAL",
       status: "PENDING",
       reason: "Personal matter",
       organizationId: orgB.id,

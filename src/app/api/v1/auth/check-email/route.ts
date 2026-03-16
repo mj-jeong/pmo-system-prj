@@ -51,10 +51,14 @@ export async function GET(req: NextRequest) {
         select: { id: true },
       });
 
-      // If org doesn't exist yet, the email is definitely available
+      // If org doesn't exist yet, fall through to global email check
       if (!org) {
+        const existingGlobal = await prisma.user.findFirst({
+          where: { email, deletedAt: null },
+          select: { id: true },
+        });
         return Response.json(
-          createSuccessResponse({ available: true }),
+          createSuccessResponse({ available: !existingGlobal }),
           { status: 200 }
         );
       }
@@ -69,9 +73,13 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // No org context — always available
+    // No org context — global email check
+    const existingGlobal = await prisma.user.findFirst({
+      where: { email, deletedAt: null },
+      select: { id: true },
+    });
     return Response.json(
-      createSuccessResponse({ available: true }),
+      createSuccessResponse({ available: !existingGlobal }),
       { status: 200 }
     );
   } catch (error) {

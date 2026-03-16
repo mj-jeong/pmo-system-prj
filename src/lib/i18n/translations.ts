@@ -207,8 +207,14 @@ interface TranslationDict {
     type: string;
     selectType: string;
     vacation: string;
+    halfDay: string;
+    quarterDay: string;
     sickLeave: string;
-    personal: string;
+    specialLeave: string;
+    condolenceLeave: string;
+    healthLeave: string;
+    unpaidLeave: string;
+    paidLeave: string;
     startDate: string;
     endDate: string;
     reason: string;
@@ -490,8 +496,14 @@ export const translations: Record<Language, TranslationDict> = {
       type: "유형",
       selectType: "유형 선택",
       vacation: "연차",
+      halfDay: "반차",
+      quarterDay: "반반차",
       sickLeave: "병가",
-      personal: "개인 사유",
+      specialLeave: "특별휴가",
+      condolenceLeave: "경조휴가",
+      healthLeave: "보건휴가",
+      unpaidLeave: "무급휴가",
+      paidLeave: "유급휴가",
       startDate: "시작일",
       endDate: "종료일",
       reason: "사유",
@@ -776,9 +788,15 @@ export const translations: Record<Language, TranslationDict> = {
       requestFormDesc: "Submit a new time-off request for review.",
       type: "Type",
       selectType: "Select type",
-      vacation: "Vacation",
+      vacation: "Annual Leave",
+      halfDay: "Half Day",
+      quarterDay: "Quarter Day",
       sickLeave: "Sick Leave",
-      personal: "Personal",
+      specialLeave: "Special Leave",
+      condolenceLeave: "Condolence Leave",
+      healthLeave: "Health Leave",
+      unpaidLeave: "Unpaid Leave",
+      paidLeave: "Paid Leave",
       startDate: "Start Date",
       endDate: "End Date",
       reason: "Reason",
@@ -1063,9 +1081,15 @@ export const translations: Record<Language, TranslationDict> = {
       requestFormDesc: "新しい休暇申請を提出します。",
       type: "種類",
       selectType: "種類を選択",
-      vacation: "有給休暇",
+      vacation: "年次休暇",
+      halfDay: "半休",
+      quarterDay: "時間休",
       sickLeave: "病気休暇",
-      personal: "私用",
+      specialLeave: "特別休暇",
+      condolenceLeave: "慶弔休暇",
+      healthLeave: "保健休暇",
+      unpaidLeave: "無給休暇",
+      paidLeave: "有給休暇",
       startDate: "開始日",
       endDate: "終了日",
       reason: "理由",
@@ -1351,8 +1375,14 @@ export const translations: Record<Language, TranslationDict> = {
       type: "类型",
       selectType: "选择类型",
       vacation: "年假",
+      halfDay: "半天假",
+      quarterDay: "小时假",
       sickLeave: "病假",
-      personal: "事假",
+      specialLeave: "特别假",
+      condolenceLeave: "婚丧假",
+      healthLeave: "保健假",
+      unpaidLeave: "无薪假",
+      paidLeave: "有薪假",
       startDate: "开始日期",
       endDate: "结束日期",
       reason: "原因",
@@ -1638,8 +1668,14 @@ export const translations: Record<Language, TranslationDict> = {
       type: "Loại",
       selectType: "Chọn loại",
       vacation: "Nghỉ phép năm",
+      halfDay: "Nửa ngày",
+      quarterDay: "Phần tư ngày",
       sickLeave: "Nghỉ ốm",
-      personal: "Việc cá nhân",
+      specialLeave: "Nghỉ đặc biệt",
+      condolenceLeave: "Nghỉ tang lễ",
+      healthLeave: "Nghỉ sức khỏe",
+      unpaidLeave: "Nghỉ không lương",
+      paidLeave: "Nghỉ có lương",
       startDate: "Ngày bắt đầu",
       endDate: "Ngày kết thúc",
       reason: "Lý do",

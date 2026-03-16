@@ -272,8 +272,14 @@ model TimeOff {
 
 enum TimeOffType {
   VACATION
+  HALF_DAY
+  QUARTER_DAY
   SICK
-  PERSONAL
+  SPECIAL
+  CONDOLENCE
+  HEALTH
+  UNPAID
+  PAID
 }
 
 enum TimeOffStatus {
@@ -548,6 +554,24 @@ model Report {
   @@index([status])
   @@index([createdById])
   @@map("reports")
+}
+
+// =============================================================================
+// EmailVerification - 이메일 인증 코드 (가입 시 실소유자 확인)
+// 6자리 숫자 코드, 10분 만료, 5회 오입력 시 무효화
+// =============================================================================
+
+model EmailVerification {
+  id         String    @id @default(cuid())
+  email      String
+  code       String    // 6자리 숫자 (평문 저장, 10분 만료 + rate limit으로 보호)
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  attempts   Int       @default(0) // 오입력 횟수 (5회 초과 시 무효화)
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+  @@map("email_verifications")
 }
 
 // =============================================================================

@@ -263,8 +263,14 @@ function CreateTimeOffDialog({ onClose }: { onClose: () => void }) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="VACATION">{t("timeOff.vacation")}</SelectItem>
+              <SelectItem value="HALF_DAY">{t("timeOff.halfDay")}</SelectItem>
+              <SelectItem value="QUARTER_DAY">{t("timeOff.quarterDay")}</SelectItem>
               <SelectItem value="SICK">{t("timeOff.sickLeave")}</SelectItem>
-              <SelectItem value="PERSONAL">{t("timeOff.personal")}</SelectItem>
+              <SelectItem value="SPECIAL">{t("timeOff.specialLeave")}</SelectItem>
+              <SelectItem value="CONDOLENCE">{t("timeOff.condolenceLeave")}</SelectItem>
+              <SelectItem value="HEALTH">{t("timeOff.healthLeave")}</SelectItem>
+              <SelectItem value="UNPAID">{t("timeOff.unpaidLeave")}</SelectItem>
+              <SelectItem value="PAID">{t("timeOff.paidLeave")}</SelectItem>
             </SelectContent>
           </Select>
           {errors.type && (

@@ -25,7 +25,7 @@ const nameSchema = z
 
 /**
  * Schema for user registration (creates new org + first OWNER user).
- * confirmPassword is client-side only; stripped before sending to API.
+ * confirmPassword and organizationNameConfirm are client-side only; stripped before sending to API.
  */
 export const registerSchema = z
   .object({
@@ -40,23 +40,30 @@ export const registerSchema = z
       .string()
       .min(2, "조직명은 2자 이상이어야 합니다")
       .max(100, "조직명은 100자 이내로 입력하세요"),
+    organizationNameConfirm: z.string().min(1, "조직명 확인을 입력하세요"),
     organizationSlug: z
       .string()
-      .min(2, "슬러그는 2자 이상이어야 합니다")
       .max(50, "슬러그는 50자 이내로 입력하세요")
       .regex(
-        /^[a-z0-9-]+$/,
+        /^[a-z0-9-]*$/,
         "슬러그는 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다"
-      ),
+      )
+      .optional()
+      .or(z.literal("")),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "비밀번호가 일치하지 않습니다",
     path: ["confirmPassword"],
+  })
+  .refine((data) => data.organizationName === data.organizationNameConfirm, {
+    message: "조직명이 일치하지 않습니다",
+    path: ["organizationNameConfirm"],
   });
 
 /**
  * Server-side schema for POST /api/v1/auth/register.
- * confirmPassword is stripped by the frontend before sending — server does not need it.
+ * confirmPassword/organizationNameConfirm are stripped by the frontend — server does not need them.
+ * organizationSlug is optional; server auto-generates from organizationName if not provided.
  */
 export const registerApiSchema = z.object({
   email: z
@@ -71,12 +78,13 @@ export const registerApiSchema = z.object({
     .max(100, "조직명은 100자 이내로 입력하세요"),
   organizationSlug: z
     .string()
-    .min(2, "슬러그는 2자 이상이어야 합니다")
     .max(50, "슬러그는 50자 이내로 입력하세요")
     .regex(
-      /^[a-z0-9-]+$/,
+      /^[a-z0-9-]*$/,
       "슬러그는 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다"
-    ),
+    )
+    .optional()
+    .or(z.literal("")),
 });
 
 /**
@@ -163,6 +171,26 @@ export const changeRoleSchema = z.object({
 export const reviewMembershipSchema = z.object({
   action: z.enum(["APPROVE", "REJECT"]),
 });
+
+/**
+ * Schema for sending an email verification code.
+ * Used by POST /api/v1/auth/send-verification
+ */
+export const sendVerificationSchema = z.object({
+  email: z.string().email("유효한 이메일 주소를 입력하세요").max(254),
+});
+
+/**
+ * Schema for verifying an email code.
+ * Used by POST /api/v1/auth/verify-email-code
+ */
+export const verifyEmailCodeSchema = z.object({
+  email: z.string().email().max(254),
+  code: z.string().length(6).regex(/^\d{6}$/, "6자리 숫자를 입력하세요"),
+});
+
+export type SendVerificationInput = z.infer<typeof sendVerificationSchema>;
+export type VerifyEmailCodeInput = z.infer<typeof verifyEmailCodeSchema>;
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type RegisterApiInput = z.infer<typeof registerApiSchema>;

@@ -41,39 +41,49 @@ interface PublicOrg {
   slug: string;
 }
 
-// ─── Debounced email check hook ─────────────────────────────────────────────
+// ─── Email Check Hook ─────────────────────────────────────────────────────────
 type EmailCheckStatus = "idle" | "checking" | "available" | "taken";
 
 function useEmailCheck(email: string, orgSlug?: string, orgId?: string) {
   const [status, setStatus] = useState<EmailCheckStatus>("idle");
-  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const prevEmailRef = useRef<string>("");
 
+  // 이메일 변경 시 idle 리셋
   useEffect(() => {
-    if (!email || email.length < 3) {
-      setStatus("idle");
-      return;
-    }
-    clearTimeout(timerRef.current);
-    setStatus("checking");
-
-    timerRef.current = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ email });
-        if (orgId) params.set("organizationId", orgId);
-        else if (orgSlug) params.set("organizationSlug", orgSlug);
-
-        const res = await fetch(`/api/v1/auth/check-email?${params}`);
-        const json = await res.json();
-        setStatus(json.data?.available ? "available" : "taken");
-      } catch {
+    if (prevEmailRef.current !== email) {
+      prevEmailRef.current = email;
+      if (status !== "idle") {
         setStatus("idle");
       }
-    }, 300);
+    }
+  }, [email, status]);
 
-    return () => clearTimeout(timerRef.current);
-  }, [email, orgSlug, orgId]);
+  async function checkEmail() {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) return;
 
-  return status;
+    setStatus("checking");
+
+    try {
+      const params = new URLSearchParams({ email });
+      if (orgSlug) params.set("organizationSlug", orgSlug);
+      if (orgId) params.set("organizationId", orgId);
+
+      const res = await fetch(`/api/v1/auth/check-email?${params}`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        setStatus("idle");
+        return;
+      }
+
+      setStatus(json.data?.available ? "available" : "taken");
+    } catch {
+      setStatus("idle");
+    }
+  }
+
+  return { status, checkEmail };
 }
 
 // ─── Create Organization Form ─────────────────────────────────────────────
@@ -92,15 +102,14 @@ function CreateOrgForm() {
   });
 
   const emailValue = watch("email") ?? "";
-  const slugValue = watch("organizationSlug") ?? "";
-  const emailStatus = useEmailCheck(emailValue, slugValue);
+  const { status: emailStatus, checkEmail } = useEmailCheck(emailValue);
 
   async function onSubmit(data: RegisterInput) {
     setIsLoading(true);
     setError(null);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { confirmPassword, ...apiData } = data;
+    const { confirmPassword, organizationNameConfirm, ...apiData } = data;
 
     try {
       const response = await fetch("/api/v1/auth/register", {
@@ -171,28 +180,34 @@ function CreateOrgForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">이메일</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="name@example.com"
-            autoComplete="email"
-            disabled={isLoading}
-            {...register("email")}
-          />
+          <Label htmlFor="create-email">이메일</Label>
+          <div className="flex gap-2">
+            <Input
+              id="create-email"
+              type="email"
+              placeholder="name@example.com"
+              autoComplete="email"
+              disabled={isLoading}
+              {...register("email")}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              disabled={isLoading || !emailValue || emailStatus === "checking"}
+              onClick={checkEmail}
+            >
+              {emailStatus === "checking" ? "확인 중..." : "중복 확인"}
+            </Button>
+          </div>
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
-          {!errors.email && emailStatus === "checking" && (
-            <p className="text-sm text-muted-foreground">이메일 확인 중...</p>
-          )}
-          {!errors.email && emailStatus === "taken" && (
-            <p className="text-sm text-destructive">
-              이미 사용 중인 이메일입니다.
-            </p>
-          )}
           {!errors.email && emailStatus === "available" && (
             <p className="text-sm text-green-600">사용 가능한 이메일입니다.</p>
+          )}
+          {!errors.email && emailStatus === "taken" && (
+            <p className="text-sm text-destructive">이미 사용 중인 이메일입니다.</p>
           )}
         </div>
 
@@ -229,7 +244,9 @@ function CreateOrgForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="organizationName">조직명</Label>
+          <Label htmlFor="organizationName">
+            조직명 <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="organizationName"
             placeholder="Acme Inc."
@@ -244,10 +261,30 @@ function CreateOrgForm() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="organizationSlug">조직 슬러그</Label>
+          <Label htmlFor="organizationNameConfirm">
+            조직명 확인 <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="organizationNameConfirm"
+            placeholder="조직명을 다시 입력하세요"
+            disabled={isLoading}
+            {...register("organizationNameConfirm")}
+          />
+          {errors.organizationNameConfirm && (
+            <p className="text-sm text-destructive">
+              {errors.organizationNameConfirm.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="organizationSlug">
+            조직 슬러그{" "}
+            <span className="text-xs text-muted-foreground">(선택사항)</span>
+          </Label>
           <Input
             id="organizationSlug"
-            placeholder="acme-inc"
+            placeholder="acme-inc (미입력 시 자동 생성)"
             disabled={isLoading}
             {...register("organizationSlug")}
           />
@@ -257,7 +294,7 @@ function CreateOrgForm() {
             </p>
           )}
           <p className="text-xs text-muted-foreground">
-            소문자, 숫자, 하이픈(-)만 사용 가능합니다.
+            소문자, 숫자, 하이픈(-)만 사용 가능합니다. 비워두면 조직명으로 자동 생성됩니다.
           </p>
         </div>
       </CardContent>
@@ -294,7 +331,11 @@ function JoinOrgForm() {
   });
 
   const emailValue = watch("email") ?? "";
-  const emailStatus = useEmailCheck(emailValue, undefined, selectedOrgId);
+  const { status: emailStatus, checkEmail } = useEmailCheck(
+    emailValue,
+    undefined,
+    selectedOrgId || undefined
+  );
 
   // Fetch org list on mount
   useEffect(() => {
@@ -408,27 +449,40 @@ function JoinOrgForm() {
 
         <div className="space-y-2">
           <Label htmlFor="join-email">이메일</Label>
-          <Input
-            id="join-email"
-            type="email"
-            placeholder="name@example.com"
-            autoComplete="email"
-            disabled={isLoading}
-            {...register("email")}
-          />
+          <div className="flex gap-2">
+            <Input
+              id="join-email"
+              type="email"
+              placeholder="name@example.com"
+              autoComplete="email"
+              disabled={isLoading}
+              {...register("email")}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              disabled={
+                isLoading ||
+                !emailValue ||
+                !selectedOrgId ||
+                emailStatus === "checking"
+              }
+              onClick={checkEmail}
+            >
+              {emailStatus === "checking" ? "확인 중..." : "중복 확인"}
+            </Button>
+          </div>
           {errors.email && (
             <p className="text-sm text-destructive">{errors.email.message}</p>
           )}
-          {!errors.email && emailStatus === "checking" && (
-            <p className="text-sm text-muted-foreground">이메일 확인 중...</p>
+          {!errors.email && emailStatus === "available" && (
+            <p className="text-sm text-green-600">사용 가능한 이메일입니다.</p>
           )}
           {!errors.email && emailStatus === "taken" && (
             <p className="text-sm text-destructive">
               이미 해당 조직에 등록된 이메일입니다.
             </p>
-          )}
-          {!errors.email && emailStatus === "available" && selectedOrgId && (
-            <p className="text-sm text-green-600">사용 가능한 이메일입니다.</p>
           )}
         </div>
 
@@ -536,7 +590,7 @@ export default function RegisterPage() {
         {activeTab === "create" ? <CreateOrgForm /> : <JoinOrgForm />}
 
         {/* Footer link */}
-        <div className="px-6 pb-6 text-center">
+        <div className="px-6 pb-6 text-center space-y-2">
           <p className="text-sm text-muted-foreground">
             이미 계정이 있으신가요?{" "}
             <Link
@@ -547,11 +601,19 @@ export default function RegisterPage() {
             </Link>
           </p>
           {activeTab === "join" && (
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               초대 링크가 있다면{" "}
               <span className="text-primary">해당 링크로 직접 접속</span>하세요.
             </p>
           )}
+          <p className="text-sm text-muted-foreground">
+            <Link
+              href="/"
+              className="font-medium text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+            >
+              ← 홈으로 돌아가기
+            </Link>
+          </p>
         </div>
       </Card>
     </div>

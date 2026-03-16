@@ -87,3 +87,52 @@ export async function sendInviteEmail(
     throw new Error(`Failed to send invitation email: ${error.message}`);
   }
 }
+
+/**
+ * Send an email verification code to the given address.
+ * Throws if RESEND_API_KEY is not configured or send fails.
+ */
+export async function sendVerificationEmail(
+  email: string,
+  code: string
+): Promise<void> {
+  const resend = getResend();
+
+  const html = `<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이메일 인증</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; color: #111827; background: #f9fafb;">
+  <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+    <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 8px;">이메일 인증 코드</h1>
+    <p style="font-size: 16px; color: #374151; margin: 0 0 24px; line-height: 1.6;">
+      아래 6자리 인증 코드를 입력하여 이메일 인증을 완료하세요.
+    </p>
+    <div style="background: #f3f4f6; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px;">
+      <span style="font-size: 40px; font-weight: 700; letter-spacing: 8px; color: #1d4ed8; font-variant-numeric: tabular-nums;">${code}</span>
+    </div>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
+    <p style="font-size: 13px; color: #9ca3af; margin: 0 0 8px;">
+      이 코드는 <strong style="color: #6b7280;">10분</strong> 동안 유효합니다.
+    </p>
+    <p style="font-size: 13px; color: #9ca3af; margin: 0;">
+      본인이 요청하지 않은 경우 이 이메일을 무시하세요.
+    </p>
+  </div>
+</body>
+</html>`;
+
+  const { error } = await resend.emails.send({
+    from: "PMO System <noreply@pmo-system.dev>",
+    to: email,
+    subject: "[PMO System] 이메일 인증 코드",
+    html,
+  });
+
+  if (error) {
+    throw new Error(`Failed to send verification email: ${error.message}`);
+  }
+}

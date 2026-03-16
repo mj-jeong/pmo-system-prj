@@ -5,6 +5,18 @@
 import { NextRequest } from "next/server";
 import bcrypt from "bcryptjs";
 
+function generateSlug(name: string): string {
+  const base = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 40);
+  return base || `org-${Date.now()}`;
+}
+
 import { prisma } from "@/lib/db/prisma";
 import { createErrorResponse, ERROR_CODES } from "@/lib/errors";
 import { registerApiSchema } from "@/lib/validators/user";
@@ -24,15 +36,24 @@ export async function POST(req: NextRequest): Promise<Response> {
       return createErrorResponse(ERROR_CODES.VALIDATION_ERROR, "Invalid input.", 400, details);
     }
 
-    const { email, name, password, organizationName, organizationSlug } = parsed.data;
+    const { email, name, password, organizationName } = parsed.data;
+    const rawSlug = parsed.data.organizationSlug;
 
-    // Check if slug is taken
+    // Use provided slug or auto-generate from organization name
+    let organizationSlug = rawSlug && rawSlug.length >= 2 ? rawSlug : generateSlug(organizationName);
+
+    // Check if slug is taken; append suffix if auto-generated slug conflicts
     const existingOrg = await prisma.organization.findUnique({
       where: { slug: organizationSlug },
     });
 
     if (existingOrg) {
-      return createErrorResponse(ERROR_CODES.ORG_SLUG_TAKEN, "Organization slug is already in use.", 409);
+      if (rawSlug && rawSlug.length >= 2) {
+        // User explicitly provided this slug — return conflict error
+        return createErrorResponse(ERROR_CODES.ORG_SLUG_TAKEN, "Organization slug is already in use.", 409);
+      }
+      // Auto-generated slug conflicts — append timestamp suffix
+      organizationSlug = `${organizationSlug}-${Date.now().toString(36)}`;
     }
 
     // Hash password

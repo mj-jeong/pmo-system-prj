@@ -3,7 +3,17 @@
 
 import { z } from "zod";
 
-const timeOffTypeEnum = z.enum(["VACATION", "SICK", "PERSONAL"]);
+const timeOffTypeEnum = z.enum([
+  "VACATION",
+  "HALF_DAY",
+  "QUARTER_DAY",
+  "SICK",
+  "SPECIAL",
+  "CONDOLENCE",
+  "HEALTH",
+  "UNPAID",
+  "PAID",
+]);
 const timeOffStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 
 /**
