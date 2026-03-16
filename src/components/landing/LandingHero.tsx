@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Github, LayoutDashboard, Zap } from "lucide-react";
+import { ArrowRight, CheckCircle2, Github, Zap } from "lucide-react";
 
 export function LandingHero() {
   return (
@@ -50,22 +51,16 @@ export function LandingHero() {
         <div className="relative mx-auto max-w-6xl">
           <div className="p-3 bg-white/50 backdrop-blur-sm rounded-[32px] border border-slate-200 shadow-2xl">
             <div
-              className="overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 flex items-center justify-center"
-              style={{ height: "480px" }}
-              role="img"
-              aria-label="Nexus PMO 대시보드 미리보기"
+              className="relative overflow-hidden rounded-[24px]"
             >
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-slate-200 rounded-xl flex items-center justify-center mx-auto">
-                  <LayoutDashboard className="w-8 h-8 text-slate-400" aria-hidden="true" />
-                </div>
-                <p className="text-slate-400 text-sm font-medium">Dashboard Preview</p>
-                <div className="flex gap-3 justify-center">
-                  <div className="h-2 w-16 bg-slate-200 rounded-full" />
-                  <div className="h-2 w-24 bg-slate-200 rounded-full" />
-                  <div className="h-2 w-12 bg-slate-200 rounded-full" />
-                </div>
-              </div>
+              <Image
+                width={1200}
+                height={960}
+                src="/pmo_hero_img@2x.png"
+                alt="Nexus PMO 대시보드 미리보기"
+                priority
+                className="object-cover object-center"
+              />
             </div>
           </div>
 
